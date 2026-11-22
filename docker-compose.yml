@@ -11,6 +11,7 @@ services:
     tmpfs: /var/run/postgresql/
     volumes:
       - ./backend/data_tools/ops_db_sql_init:/docker-entrypoint-initdb.d:ro
+      - rims-pgdata:/var/lib/postgresql # PG18+: mount di parent (entrypoint atur subdir versi)
     ports:
       - "${DB_PORT:-5432}:5432"
     healthcheck:
@@ -129,3 +130,6 @@ services:
       - /home/app/node_modules
     command: bun run storybook
     restart: on-failure
+
+volumes:
+  rims-pgdata: # PGDATA khusus RIMS staging (terpisah HSE/SafeCampus/supabase)

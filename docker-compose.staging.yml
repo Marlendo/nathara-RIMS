@@ -1,0 +1,18 @@
+# RIMS STAGING override — dipakai BERSAMA docker-compose.yml utama (JANGAN ubah utama selain volume/db):
+#   docker compose --env-file .env.staging -f docker-compose.yml -f docker-compose.staging.yml up -d db backend
+# Service setup/storybook/varian demo-initial-static DILARANG naik (profil default tidak ikut).
+# Frontend staging = static build (bun run build) via nginx /var/www/rims — service frontend TIDAK dijalankan.
+services:
+  backend:
+    container_name: rims-backend
+    # Gunicorn prod (bawaan Dockerfile CMD) + non-debug untuk staging.
+    command: [".venv/bin/pipenv", "run", "python", "-m", "gunicorn", "--timeout", "1000", "--workers", "1", "--threads", "4", "-b", ":8080", "ops_api.ops:create_app()"]
+    environment:
+      - FLASK_DEBUG=false
+    networks:
+      - default
+      - siakad-network # nginx staging proxy /api/ + /auth/ via nama container
+
+networks:
+  siakad-network:
+    external: true
