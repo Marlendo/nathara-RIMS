@@ -100,7 +100,7 @@ const ProcurementTrackerStepFour = ({
                     <p>
                         Complete the technical evaluations and any potential negotiations. If you have a target
                         completion date for when evaluations will be complete, enter it below. Once you internally
-                        select a vendor check this task as complete (Internally means internal to OPRE, before you send
+                        select a vendor check this task as complete (Internally means internal, before you send
                         the Final Consensus Memo to the Procurement Shop).
                     </p>
                     {stepStatus === PROCUREMENT_STEP_STATUS.COMPLETED && (
@@ -146,7 +146,7 @@ const ProcurementTrackerStepFour = ({
                         <p>
                             Complete the technical evaluations and any potential negotiations. If you have a target
                             completion date for when evaluations will be complete, enter it below. Once you internally
-                            select a vendor check this task as complete (Internally means internal to OPRE, before you
+                            select a vendor check this task as complete (Internally means internal, before you
                             send the Final Consensus Memo to the Procurement Shop).
                         </p>
                         <div className="display-flex flex-align-end margin-bottom-2">

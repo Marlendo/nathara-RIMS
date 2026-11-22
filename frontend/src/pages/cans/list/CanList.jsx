@@ -152,7 +152,7 @@ const CanList = () => {
             <TablePageLayout
                 title="CANs"
                 subtitle="All CANs"
-                details="This is a list of all CANs across OPRE that are or were active within the selected Fiscal Year."
+                details="This is a list of all CANs across the institution that are or were active within the selected Fiscal Year."
                 TabsSection={<CANTags />}
                 TableSection={
                     isTableLoading ? (

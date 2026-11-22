@@ -71,7 +71,7 @@ This test should only be run manually as it is dependent on timing and the JWT t
 def test_refresh_token(app, client, loaded_db, mocker):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=30)
     app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(minutes=10)
-    login_response = client.post("/auth/login/", json={"provider": "fakeauth", "code": "admin_user"})
+    login_response = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert login_response.status_code == 200
     access_token = login_response.json["access_token"]
     refresh_token = login_response.json["refresh_token"]

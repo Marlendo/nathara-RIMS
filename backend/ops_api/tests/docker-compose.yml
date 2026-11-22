@@ -1,6 +1,6 @@
 services:
   unittest_db:
-    image: "postgres:16"
+    image: "postgres:18-alpine"
 
     command: >-
       -c max_connections=400
@@ -13,7 +13,7 @@ services:
       - POSTGRES_PASSWORD=local_password  # pragma: allowlist secret
     read_only: true  # Resolve semgrep https://sg.run/e4JE
     tmpfs:
-      - /var/lib/postgresql/data
+      - /var/lib/postgresql
       - /var/run/postgresql/
     volumes:
       - ../../data_tools/ops_db_sql_init:/docker-entrypoint-initdb.d

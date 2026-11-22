@@ -28,8 +28,10 @@ openssl genrsa -out ~/ops-keys/keypair.pem 2048
 openssl rsa -in ~/ops-keys/keypair.pem -pubout -out ~/ops-keys/public.pem
 openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ~/ops-keys/keypair.pem -out ~/ops-keys/private.pem
 
-export JWT_PRIVATE_KEY="$(cat ~/ops-keys/private.pem)"
-export JWT_PUBLIC_KEY="$(cat ~/ops-keys/public.pem)"
+# MIGRATION (PM RIMS 0001): JWT_PRIVATE_KEY/JWT_PUBLIC_KEY lama DIMATIKAN.
+# SSO Supabase prod hanya butuh SUPABASE_JWKS_URL + SUPABASE_ANON_KEY (publik).
+export SUPABASE_JWKS_URL="https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
+export SUPABASE_ANON_KEY="<anon-key-publik-dari-VPS-file>"
 
 cat ~/ops-keys/public.pem > ../../public.pub
 cat ~/ops-keys/public.pem > ./ops/static/public.pem
@@ -159,8 +161,8 @@ Default configuration is loaded from `ops/environment/default_settings.py`.
 
 ### Key Environment Variables
 
-- `JWT_PRIVATE_KEY` - Required for JWT signing (RSA private key)
-- `JWT_PUBLIC_KEY` - Required for JWT verification (RSA public key)
+- `SUPABASE_JWKS_URL` - JWKS publik Supabase prod (verifikasi RS256 + cache 10 mnt)
+- `SUPABASE_ANON_KEY` - anon/publishable key publik (JANGAN service_role; JANGAN keypair lama)
 - `FLASK_ENV` - Set to `development` for debug mode
 - `DATABASE_URL` - PostgreSQL connection string (default: `postgresql://ops:ops@localhost:5432/postgres`)
 

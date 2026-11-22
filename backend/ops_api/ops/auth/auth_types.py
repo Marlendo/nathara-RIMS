@@ -48,9 +48,14 @@ class UserInfoDict(TypedDict):
 
 
 class ProviderTypes(Enum):
-    fakeauth = auto()
-    logingov = auto()
-    hhsams = auto()
+    """MIGRATION (PM RIMS 0001): provider login lama DIMATIKAN.
+
+    Enum dipertahankan sebagai stub satu-nilai agar import lama tidak
+    pecah; nilai lama dihapus. Login baru via SSO Supabase prod
+    (POST /auth/sso/callback) tanpa argumen provider/code.
+    """
+
+    NATHARA_SSO = auto()
 
 
 class LoginErrorTypes(Enum):

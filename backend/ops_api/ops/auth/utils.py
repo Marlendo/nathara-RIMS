@@ -1,13 +1,9 @@
-import json
 import time
-import uuid
 from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-import requests
-from authlib.jose import jwt as jose_jwt
-from flask import Config, current_app, request
+from flask import current_app, request
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -25,55 +21,30 @@ from ops_api.ops.auth.exceptions import PrivateKeyError
 
 def create_oauth_jwt(
     provider: str,
-    config: Config,
+    config,
     key: Optional[str] = None,
     header: Optional[str] = None,
     payload: Optional[dict[str, Any]] = None,
 ) -> str:
+    """MIGRATION (PM RIMS 0001): penandatanganan JWT keypair lama DIMATIKAN.
+
+    Keypair lama (private key) HARAM dipakai. Verifikasi diganti JWKS prod
+    publik, lihat supabase_sso_provider.verify_supabase_jwt.
     """
-    Returns an Access Token JWS from the configured OAuth Client
-    :param provider: REQUIRED - The provider to use for the JWS
-    :param config: REQUIRED - The configuration object for the application
-    :param key: OPTIONAL - Private Key used for encoding the JWS
-    :param header: OPTIONAL - JWS Header containing algorithm type
-    :param payload: OPTIONAL - Contains the JWS payload
-    :return: JsonWebSignature
-    """
-    jwt_private_key = key or config.get("JWT_PRIVATE_KEY")
-    if not jwt_private_key:
-        raise PrivateKeyError("Private Key not found in the configuration")
-
-    expire = config["JWT_ACCESS_TOKEN_EXPIRES"]
-
-    _payload = payload or {
-        "iss": config["AUTHLIB_OAUTH_CLIENTS"][provider]["client_id"],
-        "sub": config["AUTHLIB_OAUTH_CLIENTS"][provider]["client_id"],
-        "aud": config["AUTHLIB_OAUTH_CLIENTS"][provider]["aud"],
-        "jti": str(uuid.uuid4()),
-        "exp": int(time.time()) + expire.seconds,
-        "sso": provider,
-    }
-    _header = header or {"alg": "RS256"}
-
-    jws = jose_jwt.encode(header=_header, payload=_payload, key=jwt_private_key)
-    return jws
+    raise PrivateKeyError("Penandatanganan JWT lama dimatikan (PM RIMS 0001).")
 
 
 def get_jwks(provider_metadata_url: str) -> str:
-    """
-    See: https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets
-    """
-    provider_uris = json.loads(
-        requests.get(
-            provider_metadata_url,
-            headers={"Accept": "application/json"},
-            timeout=30,
-        ).content.decode("utf-8")
-    )
+    """MIGRATION (PM RIMS 0001): fetch JWKS tanpa cache DIMATIKAN.
 
-    jwks_uri = provider_uris["jwks_uri"]
-    jwks = requests.get(jwks_uri, timeout=30).content.decode("utf-8")
-    return jwks
+    Diganti supabase_sso_provider.get_supabase_jwks (JWKS prod + cache
+    TTL 10 menit). Argumen URL lama diabaikan; config SSO yang dipakai.
+    """
+    import json
+
+    from ops_api.ops.auth.supabase_sso_provider import get_supabase_jwks
+
+    return json.dumps(get_supabase_jwks())
 
 
 def get_user_from_userinfo(user_info: UserInfoDict, session: Session) -> Optional[User]:
@@ -84,6 +55,13 @@ def get_user_from_userinfo(user_info: UserInfoDict, session: Session) -> Optiona
     :return: User
     """
     # Eager load only roles to avoid lazy loading other relationships during login
+    sub = user_info.get("supabase_sub") or user_info.get("sub")
+    user = None
+    if sub:
+        stmt = select(User).options(selectinload(User.roles)).where(User.supabase_sub == sub)
+        user = session.scalars(stmt).one_or_none()
+    if user:
+        return user
     stmt = select(User).options(selectinload(User.roles)).where(User.oidc_id == user_info.get("sub"))
     user = session.scalars(stmt).one_or_none()
     if user:
@@ -103,10 +81,20 @@ def update_user_from_userinfo(user: User, user_info: UserInfoDict, session: Sess
     user.last_name = user_info.get("family_name")
     user.hhs_id = user_info.get("hhsid")
     user.email = user_info.get("email")
-    user.oidc_id = UUID(user_info.get("sub"))
+    supabase_sub = user_info.get("supabase_sub") or user_info.get("sub")
+    if supabase_sub and not getattr(user, "supabase_sub", None):
+        user.supabase_sub = str(supabase_sub)
+    # oidc_id legacy (UUID): hanya ditulis bila sub berformat UUID agar tidak
+    # merusak baris untuk subjek SSO non-UUID.
+    try:
+        candidate = UUID(str(user_info.get("sub"))) if user_info.get("sub") else None
+    except (ValueError, AttributeError, TypeError):
+        candidate = None
+    if candidate is not None:
+        user.oidc_id = candidate
 
     # Avoid expensive user.to_dict() call during login - just log basic info
-    logger.debug(f"Updating User: id={user.id}, email={user.email}, oidc_id={user.oidc_id}")
+    logger.debug(f"Updating User: id={user.id}, email={user.email}, supabase_sub={user.supabase_sub}")
 
     session.add(user)
     session.commit()
@@ -126,7 +114,7 @@ def get_user(user_info: UserInfoDict, session: Session) -> User | None:
 
 
 def _get_token_and_user_data_from_internal_auth(
-    user_data: UserInfoDict, config: Config, session: Session
+    user_data: UserInfoDict, config, session: Session, extra_claims: dict | None = None
 ) -> tuple[str, str, User]:
     """
     Generate internal backend-JWT.
@@ -135,9 +123,9 @@ def _get_token_and_user_data_from_internal_auth(
     user = get_user(user_data, session)
 
     # The next two tokens are specific to our backend API, these are used for our API
-    # authZ, given a valid login from the prior AuthN steps above.
+    # authZ, given a valid login from the prior authN steps above.
 
-    additional_claims = {}
+    additional_claims = dict(extra_claims or {})
     if user.roles:
         additional_claims["roles"] = [role.name for role in user.roles]
     access_token = create_access_token(
@@ -154,9 +142,31 @@ def _get_token_and_user_data_from_internal_auth(
     return access_token, refresh_token, user
 
 
-def is_token_expired(token: str, secret_key: str) -> bool:
-    data = jose_jwt.decode(token, secret_key)
+def is_token_expired(token: str, secret_key: str | None = None) -> bool:
+    """MIGRATION (PM RIMS 0001): validasi expiry TANPA secret key lama.
+
+    Argumen secret_key lama diabaikan (keypair dimatikan). Expiry dibaca
+    dari klaim JWT tanpa verifikasi tanda tangan — pemanggil WAJIB sudah
+    memvalidasi tanda tangan via supabase_sso_provider.verify_supabase_jwt
+    sebelum memanggil ini untuk keputusan auth.
+    """
+    from authlib.jose import jwt as jose_jwt_decode
+
+    try:
+        data = jose_jwt_decode.decode(token, key="")
+    except Exception:
+        try:
+            import base64
+            import json as _json
+
+            parts = token.split(".")
+            padded = parts[1] + "=" * (-len(parts[1]) % 4)
+            data = _json.loads(base64.urlsafe_b64decode(padded))
+        except Exception:
+            return True
     exp = data.get("exp")
+    if exp is None:
+        return True
     current_timestamp = time.time()
     logger.debug(f"Token Expiration: {exp} Current Time: {current_timestamp}")
     return exp < current_timestamp

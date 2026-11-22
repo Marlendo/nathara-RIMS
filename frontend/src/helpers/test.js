@@ -7,13 +7,12 @@ export const dispatchUsecase = async (usecase) => {
     return await usecase(dispatch, getState);
 };
 
+// MIGRATION (PM RIMS 0001): provider lama DIMATIKAN (test helper).
 export const authConfig = {
-    fakeauth: {
+    natharaSso: {
         auth_endpoint: "https://dummy/123",
-        acr_values: "http://acr/values",
-        client_id: "blah:blah",
-        response_type: "blah",
-        scope: "blah blah",
+        response_type: "code",
+        scope: "openid profile email",
         redirect_uri: "http://uri/login"
     }
 };

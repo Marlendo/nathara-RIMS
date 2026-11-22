@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-OPRE OPS is the Portfolio Management System for OPRE (Office of Planning, Research and Evaluation), replacing the legacy MAPS system. It's a full-stack web application with a Flask/SQLAlchemy backend API and a React/Redux frontend, containerized with Docker.
+Nathara RIMS is the Research & Innovation Management System (lppm.nathara.ac.id), forked from OPRE-OPS. Full-stack Flask/SQLAlchemy backend + React/Redux frontend, Docker. Auth: SSO Supabase prod only (legacy OAuth + JWT keypair DISABLED, PM RIMS 0001).
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8080

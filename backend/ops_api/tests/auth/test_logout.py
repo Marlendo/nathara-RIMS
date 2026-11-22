@@ -1,12 +1,11 @@
 # flake8: noqa: S105, S106
 import datetime
-import uuid
 
 import pytest
+from flask_jwt_extended import create_access_token
 from sqlalchemy import select, text
 
 from models import User, UserSession
-from ops_api.ops.auth.utils import create_oauth_jwt
 
 
 @pytest.fixture()
@@ -64,21 +63,16 @@ def db_with_active_user_session(loaded_db, test_user):
 
 
 def test_logout(app, client, db_with_active_user_session, app_ctx):
-    jwt = create_oauth_jwt(
-        "fakeauth",
-        app.config,
-        payload={
-            "sub": "00000000-0000-1111-a111-000000000019",
-            "iat": datetime.datetime.utcnow(),
-            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1),
-            "iss": app.config["AUTHLIB_OAUTH_CLIENTS"]["fakeauth"]["client_id"],
-            "aud": app.config["AUTHLIB_OAUTH_CLIENTS"]["fakeauth"]["aud"],
-            "jti": str(uuid.uuid4()),
-            "sso": "fakeauth",
-        },
+    # MIGRATION (PM RIMS 0001): token sesi app internal dibuat via flask_jwt_extended
+    # (keypair lama create_oauth_jwt DIMATIKAN).
+    user = (
+        db_with_active_user_session.execute(select(User).where(User.email == "user.demo@email.com"))
+        .scalars()
+        .one_or_none()
     )
+    jwt = create_access_token(identity=user)
 
-    res = client.post("/auth/logout/", headers={"Authorization": f"Bearer {jwt.decode('utf-8')}"})
+    res = client.post("/auth/logout/", headers={"Authorization": f"Bearer {jwt}"})
     assert res.status_code == 200
     assert res.json["message"] == "User: user.demo@email.com Logged out"
 

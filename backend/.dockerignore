@@ -1,1 +1,5 @@
 pytest.ini
+# DEV venv lokal JANGAN ikut ke image (merusak .venv bawaan image).
+.venv/
+venv/
+venv.bak/

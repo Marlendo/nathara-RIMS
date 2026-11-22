@@ -10,7 +10,7 @@ class BaseDocumentTestCase(unittest.TestCase):
     def setUp(self):
         # Mock Flask app
         self.app = Flask(__name__)
-        self.app.config["AUTHLIB_OAUTH_CLIENTS"] = "fakeauth"
+        self.app.config["AUTHLIB_OAUTH_CLIENTS"] = {}  # MIGRATION (PM RIMS 0001): provider lama DIMATIKAN
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()

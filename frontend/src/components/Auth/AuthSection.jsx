@@ -1,17 +1,16 @@
 import { faArrowRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import cryptoRandomString from "crypto-random-string";
 import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useLoginMutation, useLogoutMutation } from "../../api/opsAuthAPI";
+import { useSsoCallbackMutation, useLogoutMutation } from "../../api/opsAuthAPI";
 import User from "../UI/Header/User";
 import NotificationCenter from "../UI/NotificationCenter/NotificationCenter";
-import { getAccessToken, getAuthorizationCode, setActiveUser } from "./auth";
+import { getAccessToken, setActiveUser } from "./auth";
 import { login, logout } from "./authSlice";
 
 /**
- * Authentication section component that handles login/logout functionality
+ * Authentication section component (SSO Nathara, PM RIMS 0001).
  * @returns {React.ReactElement} The AuthSection component
  */
 const AuthSection = () => {
@@ -21,21 +20,17 @@ const AuthSection = () => {
     const activeUser = useSelector((state) => state.auth?.activeUser);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [loginMutation] = useLoginMutation();
+    const [ssoCallback] = useSsoCallbackMutation();
     const [logoutMutation] = useLogoutMutation();
 
     /**
-     * Handles the authentication code callback from the provider
-     * @param {string} authCode - The authorization code from the provider
+     * Menukar JWT SSO Supabase (dari IdP) ke sesi aplikasi via backend.
+     * @param {string} supabaseJwt - JWT Supabase prod dari IdP
      */
     const callBackend = useCallback(
-        async (authCode) => {
+        async (supabaseJwt) => {
             try {
-                const activeProvider = localStorage.getItem("activeProvider") || "logingov";
-                const response = await loginMutation({
-                    provider: activeProvider,
-                    code: authCode
-                }).unwrap();
+                const response = await ssoCallback({ supabase_jwt: supabaseJwt }).unwrap();
 
                 if (response.access_token) {
                     localStorage.setItem("access_token", response.access_token);
@@ -46,43 +41,31 @@ const AuthSection = () => {
                 navigate("/");
                 // eslint-disable-next-line no-unused-vars
             } catch (error) {
-                console.error("Error logging in");
+                console.error("Error logging in via SSO Nathara");
                 dispatch(logout());
                 navigate("/login");
             }
         },
-        [activeUser, dispatch, navigate, loginMutation]
+        [activeUser, dispatch, navigate, ssoCallback]
     );
 
     useEffect(() => {
         const currentJWT = getAccessToken();
 
-        // Check for authentication code in URL first - this should take priority
+        // Kembalian SSO Nathara: JWT Supabase via ?sso_jwt=... atau hash #access_token=...
+        // TODO-SSOT: samakan dengan flow final PM Production (PKCE/code exchange).
         const queryParams = new URLSearchParams(window.location.search);
-        const localStateString = localStorage.getItem("ops-state-key");
-
-        // Process auth callback before doing any other auth checks
-        if (queryParams.has("state") && queryParams.has("code") && localStateString) {
-            const returnedState = queryParams.get("state");
-            const authCode = queryParams.get("code");
-
-            console.log(`Processing auth callback with code: ${authCode}`);
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const ssoJwt = queryParams.get("sso_jwt") || hashParams.get("access_token");
+        if (ssoJwt) {
+            localStorage.removeItem("activeProvider");
             localStorage.removeItem("ops-state-key");
-
-            if (localStateString !== returnedState) {
-                console.error("State mismatch:", { localStateString, returnedState });
-                throw new Error("Response from OIDC provider is invalid.");
-            } else if (authCode) {
-                // Handle the code immediately, no need to check tokens first
-                callBackend(authCode).catch((error) => {
-                    console.error("Error in callBackend:", error);
-                    dispatch(logout());
-                    navigate("/login");
-                });
-
-                // Exit early - don't run the ensureActiveUser logic during auth callback
-                return;
-            }
+            callBackend(ssoJwt).catch((error) => {
+                console.error("Error in SSO callBackend:", error);
+                dispatch(logout());
+                navigate("/login");
+            });
+            return;
         }
 
         // Only run token validation if we're not processing an auth callback
@@ -104,11 +87,6 @@ const AuthSection = () => {
         };
 
         ensureActiveUser();
-
-        // Set state token if none exists
-        if (!localStateString && !queryParams.has("code")) {
-            localStorage.setItem("ops-state-key", cryptoRandomString({ length: 64 }));
-        }
     }, [activeUser, callBackend, dispatch, navigate]);
 
     /**
@@ -127,10 +105,8 @@ const AuthSection = () => {
             await dispatch(logout());
             navigate("/login");
         }
-        // TODO: ⬇ Logout from Auth Provider ⬇
-        // const output = await logoutUser(localStorage.getItem("ops-state-key"));
-        // console.log(output);
-        // TODO: Add the current access_token's 'jti' to a revocation list, to prevent replay attacks
+        // Sesi IdP diakhiri dengan login ulang di SSO Nathara (backend
+        // menonaktifkan sesi app). TODO: revocation list 'jti' bila dibutuhkan.
     };
 
     return (
@@ -142,10 +118,7 @@ const AuthSection = () => {
                         type="button"
                         className="usa-button usa-button--unstyled margin-105"
                         onClick={() => {
-                            const stateKey = localStorage.getItem("ops-state-key");
-                            if (stateKey) {
-                                window.location.href = getAuthorizationCode("logingov", stateKey).toString();
-                            }
+                            navigate("/login");
                         }}
                     >
                         <span

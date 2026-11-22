@@ -159,7 +159,7 @@ agreement.fee_percentage = 0.05
 
 ## Environment Variables
 
-- `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY`: RSA keys for JWT signing/verification (required)
+- `SUPABASE_JWKS_URL` / `SUPABASE_ANON_KEY`: JWKS + anon key publik Supabase prod (keypair lama DIMATIKAN)
 - `FLASK_ENV`: Set to `development` for debug mode
 - `DATABASE_URL`: PostgreSQL connection string (default: `postgresql://ops:ops@localhost:5432/postgres`)
 - `SECRET_KEY`: Flask secret key (auto-generated in development)

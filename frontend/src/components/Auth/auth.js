@@ -1,7 +1,5 @@
-import cryptoRandomString from "crypto-random-string";
 import { jwtDecode } from "jwt-decode";
 import { getUserByOidc } from "../../api/getUser";
-import ApplicationContext from "../../applicationContext/ApplicationContext";
 import { logout, setUserDetails } from "../Auth/authSlice";
 import { postRefresh } from "../../api/postRefresh.js";
 
@@ -16,50 +14,20 @@ class TokenValidationStatus {
 }
 
 /**
- * Generates the authorization code URL for the specified provider and state token.
- * @function getAuthorizationCode
- * @param {string} provider - The name of the provider to generate the authorization code URL for.
- * @param {string} stateToken - The state token to include in the authorization code URL.
- * @returns {URL} The authorization code URL for the specified provider and state token.
- *
- * @example
- * const provider = "login.gov";
- * const stateToken = "12345";
- * const authUrl = getAuthorizationCode(provider, stateToken);
+ * MIGRATION (PM RIMS 0001): URL otorisasi provider lama DIMATIKAN.
+ * Login kini via SSO Nathara (Supabase Auth prod) -> tukar JWT di backend
+ * POST /auth/sso/callback. Stub fail-closed agar pemanggil lama pecah eksplisit.
  */
-export const getAuthorizationCode = (provider, stateToken) => {
-    const authConfig = ApplicationContext.get().helpers().authConfig;
-    const authProvider = authConfig[provider];
-    const providerUrl = new URL(authProvider.auth_endpoint);
-    providerUrl.searchParams.set("acr_values", authProvider.acr_values);
-    providerUrl.searchParams.set("client_id", authProvider.client_id);
-    providerUrl.searchParams.set("response_type", authProvider.response_type);
-    providerUrl.searchParams.set("scope", authProvider.scope);
-    providerUrl.searchParams.set("redirect_uri", authProvider.redirect_uri);
-    providerUrl.searchParams.set("state", stateToken);
-    providerUrl.searchParams.set("nonce", cryptoRandomString({ length: 64 }));
-    return providerUrl;
+export const getAuthorizationCode = () => {
+    throw new Error("Login lama dimatikan (PM RIMS 0001). Gunakan SSO Nathara.");
 };
 
 /**
- * Logs out the user and returns the URL to redirect to for logout.
- * @param {string} stateToken - The state token to include in the logout URL.
- * @returns {URL} - The URL to redirect to for logout.
+ * Logout SSO: backend menonaktifkan sesi app (POST /auth/logout/);
+ * sesi IdP diakhiri dengan login ulang. Stub URL provider lama DIMATIKAN.
  */
-export const logoutUser = async (stateToken) => {
-    // As documented here: https://developers.login.gov/oidc/
-    // Example:
-    //
-    // https://idp.int.identitysandbox.gov/openid_connect/logout?
-    //   client_id=${CLIENT_ID}&
-    //   post_logout_redirect_uri=${REDIRECT_URI}&
-    //   state=abcdefghijklmnopabcdefghijklmnop
-    const authConfig = ApplicationContext.get().helpers().authConfig;
-    const providerLogout = new URL(authConfig.logout_endpoint);
-    providerLogout.searchParams.set("client_id", authConfig.client_id);
-    providerLogout.searchParams.set("post_logout_redirect_uri", window.location.hostname);
-    providerLogout.searchParams.set("state", stateToken);
-    return providerLogout;
+export const logoutUser = async () => {
+    return null;
 };
 
 /**
@@ -159,10 +127,10 @@ export const isValidToken = (token) => {
             return new TokenValidationStatus(false, "EXPIRED");
         }
 
-        // Check issuer
+        // Check issuer — sesi app internal Nathara RIMS.
+        // TODO-SSOT: samakan iss final sesi app bila berubah dari placeholder.
         const issuer = decodedJwt["iss"];
-        // TODO: Update this when we have a real issuer value
-        if (issuer !== "https://opre-ops-backend-dev") {
+        if (issuer && issuer !== "https://lppm.nathara.ac.id" && issuer !== "https://nathara-rims-backend-dev") {
             return new TokenValidationStatus(false, "ISSUER");
         }
 

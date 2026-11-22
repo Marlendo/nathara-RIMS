@@ -29,11 +29,19 @@ export const opsAuthApi = createApi({
             query: () => `/roles/`,
             providesTags: ["Roles"]
         }),
+        // MIGRATION (PM RIMS 0001): login provider/code lama DIMATIKAN.
+        // Login baru: tukar JWT Supabase prod via /sso/callback.
         login: builder.mutation({
-            query: ({ provider, code }) => ({
-                url: "/login/",
+            query: () => {
+                throw new Error("Login lama dimatikan (PM RIMS 0001). Gunakan SSO Nathara.");
+            },
+            invalidatesTags: ["Auth"]
+        }),
+        ssoCallback: builder.mutation({
+            query: ({ supabase_jwt }) => ({
+                url: "/sso/callback",
                 method: "POST",
-                body: { provider, code }
+                body: { supabase_jwt }
             }),
             invalidatesTags: ["Auth"],
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
@@ -49,6 +57,10 @@ export const opsAuthApi = createApi({
                     );
                 }
             }
+        }),
+        ssoSession: builder.query({
+            query: () => `/sso/session`,
+            providesTags: ["Auth"]
         }),
         logout: builder.mutation({
             query: () => ({
@@ -72,4 +84,5 @@ export const opsAuthApi = createApi({
     })
 });
 
-export const { useGetRolesQuery, useLoginMutation, useLogoutMutation } = opsAuthApi;
+export const { useGetRolesQuery, useLoginMutation, useSsoCallbackMutation, useSsoSessionQuery, useLogoutMutation } =
+    opsAuthApi;

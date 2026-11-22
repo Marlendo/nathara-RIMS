@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgres:16
+    image: postgres:18-alpine
+    container_name: rims-postgres
 
     security_opt:
       - no-new-privileges:true # Resolve semgrep https://sg.run/0n8q
@@ -58,10 +59,16 @@ services:
 
     ports:
       - "${BACKEND_PORT:-8080}:8080"
-    command: /bin/sh -c " . .venv/bin/activate && python -m flask run --debug --host=0.0.0.0 --port=8080"
+    command: /bin/sh -c " . .venv/bin/activate && python -m flask run --host=0.0.0.0 --port=8080"
     environment:
-      - JWT_PRIVATE_KEY
-      - JWT_PUBLIC_KEY
+      # MIGRATION (PM RIMS 0001): JWT_PRIVATE_KEY/JWT_PUBLIC_KEY lama DIMATIKAN (dihapus).
+      # SSO Supabase prod hanya butuh nilai publik di bawah (tanpa secret).
+      # JWT_SECRET_KEY = secret server-side untuk sesi app internal HS256 (isi via file VPS, JANGAN log nilainya).
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-}
+      - SUPABASE_JWKS_URL=${SUPABASE_JWKS_URL:-https://api.nathara.ac.id/auth/v1/.well-known/jwks.json}
+      - SUPABASE_ISS=${SUPABASE_ISS:-https://api.nathara.ac.id/auth/v1}
+      - SUPABASE_AUD=${SUPABASE_AUD:-authenticated}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
       - SKIP_CR_FOR_DRAFT_PLANNED
       - ENABLE_MODIFIED_LOE_EDITS
       - OPS_CONFIG=environment/local/container.py

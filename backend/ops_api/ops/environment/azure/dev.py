@@ -18,26 +18,6 @@ SQLALCHEMY_DATABASE_URI = (
 )
 SQLALCHEMY_ECHO = True
 
-AUTHLIB_OAUTH_CLIENTS = {
-    "hhsams": {
-        "server_metadata_url": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/.well-known/openid-configuration",
-        "token_endpoint": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/token",
-        "user_info_url": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/userinfo",
-        "client_id": "44fe2c7a-e9c5-43ec-87e9-3de78d2d3a11",
-        "client_kwargs": {"scope": "openid email"},
-        "aud": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/token",
-        "redirect_uri": "https://dev.ops.opre.acf.gov/login",
-    },
-    "fakeauth": {
-        "server_metadata_url": "http://localhost:5000/oidc/.well-known/openid-configuration",
-        "token_endpoint": "http://localhost:5000/oidc/openid-connect/token",
-        "user_info_url": "http://localhost:5000/oidc/openid-connect/userinfo",
-        "client_id": "blah:blah",
-        "client_kwargs": {"scope": "openid email"},
-        "aud": "http://localhost:5000/oidc/openid-connect/token",
-        "redirect_uri": "https://dev.ops.opre.acf.gov/login",
-    },
-}
 
 # CSRF Protection
 # This is the prefix for the Host header in the cloud environment.
@@ -54,3 +34,6 @@ ENABLE_MODIFIED_LOE_EDITS = True
 
 # Allow today/past Obligate By dates on non-Draft budget lines (issue 6443); see default_settings.py to turn it off.
 ALLOW_PAST_OBLIGATE_BY_DATES = True
+
+# MIGRATION (PM RIMS 0001): AUTHLIB provider lama DIMATIKAN (dict kosong).
+AUTHLIB_OAUTH_CLIENTS = {}

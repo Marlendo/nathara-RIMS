@@ -19,17 +19,6 @@ SQLALCHEMY_DATABASE_URI = (
 
 SQLALCHEMY_ECHO = False
 
-AUTHLIB_OAUTH_CLIENTS = {
-    "hhsams": {
-        "server_metadata_url": "https://sso.acf.hhs.gov/auth/realms/ACF-AMS/.well-known/openid-configuration",
-        "token_endpoint": "https://sso.acf.hhs.gov/auth/realms/ACF-AMS/protocol/openid-connect/token",
-        "user_info_url": "https://sso.acf.hhs.gov/auth/realms/ACF-AMS/protocol/openid-connect/userinfo",
-        "client_id": "https://ops.opre.acf.gov",
-        "client_kwargs": {"scope": "openid email"},
-        "aud": "https://sso.acf.hhs.gov/auth/realms/ACF-AMS/protocol/openid-connect/token",
-        "redirect_uri": "https://ops.opre.acf.gov/login",
-    },
-}
 
 # CSRF Protection
 # This is the prefix for the Host header in the cloud environment.
@@ -47,3 +36,6 @@ SKIP_CR_FOR_DRAFT_PLANNED = True
 
 # Allow today/past Obligate By dates on non-Draft budget lines (issue 6443); see default_settings.py to turn it off.
 ALLOW_PAST_OBLIGATE_BY_DATES = True
+
+# MIGRATION (PM RIMS 0001): AUTHLIB provider lama DIMATIKAN (dict kosong).
+AUTHLIB_OAUTH_CLIENTS = {}

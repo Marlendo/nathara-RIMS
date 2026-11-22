@@ -1,106 +1,108 @@
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import (
-    Encoding,
-    NoEncryption,
-    PrivateFormat,
-)
-from flask import current_app
+"""MIGRATION (PM RIMS 0001): test controller login lama diganti test SSO.
+
+- POST /auth/login/ (provider/code) DIMATIKAN -> 410.
+- Login baru: POST /auth/sso/callback {supabase_jwt} -> sesi app;
+  GET /auth/sso/session -> info sesi.
+"""
+
+import pytest
 from sqlalchemy import text
 
-from models import User, UserStatus
 from models.events import OpsEventStatus, OpsEventType
-from ops_api.ops.auth.auth_types import LoginErrorTypes
-from ops_api.ops.auth.utils import create_oauth_jwt
+from ops_api.ops.auth.exceptions import PrivateKeyError, UserInactiveError, UserLockedError
 
 
-def test_auth_post_fails(client):
-    data = {"provider": "fakeauth"}  # missing auth_code
+def test_auth_login_deprecated_returns_410(client):
+    res = client.post("/auth/login/", json={"provider": "whatever", "code": "x"})
+    assert res.status_code == 410
+    assert "sso/callback" in res.json["message"]
 
-    res = client.post("/auth/login/", json=data)
+
+def test_create_oauth_jwt_disabled_raises(app, app_ctx):
+    from ops_api.ops.auth.utils import create_oauth_jwt
+
+    with pytest.raises(PrivateKeyError):
+        create_oauth_jwt("whatever", app.config)
+
+
+def test_sso_callback_rejects_empty_payload(client):
+    res = client.post("/auth/sso/callback", json={})
     assert res.status_code == 400
 
 
-def test_get_jwt_not_none(app, app_ctx):
-    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    encoded = key.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption())
-    with app.test_request_context("/auth/login", method="POST", data={"provider": "fakeauth", "code": ""}):
-        jwt = create_oauth_jwt("fakeauth", current_app.config, key=encoded)
-        print(f"jwt: {jwt}")
-        assert jwt is not None
+def test_sso_callback_rejects_invalid_token(client, mocker):
+    mocker.patch(
+        "ops_api.ops.auth.service.verify_supabase_jwt",
+        side_effect=PrivateKeyError("nope"),
+    )
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "bad"})
+    assert res.status_code in (400, 401, 500)
 
 
-def test_auth_post_fails_creates_event(client, loaded_db, mocker):
+def test_sso_callback_denies_non_admin_rims(client, loaded_db, mocker):
+    mocker.patch(
+        "ops_api.ops.auth.service.verify_supabase_jwt",
+        return_value={
+            "iss": "https://api.nathara.ac.id/auth/v1",
+            "aud": "authenticated",
+            "sub": "11111111-1111-1111-1111-111111111111",
+            "email": "user.demo@email.com",
+            "exp": 4102444800,
+            "role": "user",
+            "scope": "RIMS",
+        },
+    )
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
+    assert res.status_code == 403
+
+
+def test_sso_callback_succeeds_creates_event(client, loaded_db, mocker, test_non_admin_user):
     mock_cm = mocker.patch("ops_api.ops.utils.events.Session")
     mock_session = mocker.MagicMock()
     mock_cm.return_value.__enter__.return_value = mock_session
 
-    data = {"code": "abc123"}  # missing provider
+    mocker.patch(
+        "ops_api.ops.auth.service.verify_supabase_jwt",
+        return_value={
+            "iss": "https://api.nathara.ac.id/auth/v1",
+            "aud": "authenticated",
+            "sub": "22222222-2222-2222-2222-222222222222",
+            "email": test_non_admin_user.email,
+            "given_name": "Test",
+            "family_name": "User",
+            "exp": 4102444800,
+            "role": "admin",
+            "scope": "RIMS",
+        },
+    )
 
-    res = client.post("/auth/login/", json=data)
-    print(f"response: {res.json}")
-    assert res.status_code == 400
-
-
-def test_auth_post_succeeds_creates_event(client, loaded_db, mocker, test_non_admin_user):
-    # setup mocks
-    mock_cm = mocker.patch("ops_api.ops.utils.events.Session")
-    mock_session = mocker.MagicMock()
-    mock_cm.return_value.__enter__.return_value = mock_session
-
-    m2 = mocker.patch("ops_api.ops.auth.service._get_token_and_user_data_from_internal_auth")
-    m2.return_value = ("blah", "blah", test_non_admin_user)
-
-    # test
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert res.status_code == 200
+    assert res.json["access_token"]
+    assert res.json["refresh_token"]
 
     event = mock_session.add.call_args[0][0]
     assert event.event_type == OpsEventType.LOGIN_ATTEMPT
     assert event.event_status == OpsEventStatus.SUCCESS
-    assert event.event_details["access_token"] == "blah"
 
     # cleanup
     loaded_db.execute(text("DELETE FROM user_session"))
     loaded_db.commit()
 
 
-def test_login_succeeds_with_active_status(client, loaded_db, mocker, test_non_admin_user):
-    # setup mocks
-    m2 = mocker.patch("ops_api.ops.auth.service._get_token_and_user_data_from_internal_auth")
-    m2.return_value = ("blah", "blah", test_non_admin_user)
+def test_sso_callback_fails_with_inactive_user(client, loaded_db, mocker):
+    m1 = mocker.patch("ops_api.ops.auth.service.login_sso")
+    m1.side_effect = UserInactiveError("inactive")
 
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
-    assert res.status_code == 200
-
-    # cleanup
-    loaded_db.execute(text("DELETE FROM user_session"))
-    loaded_db.commit()
-
-
-def test_login_fails_with_inactive_status(client, loaded_db, mocker):
-    m1 = mocker.patch("ops_api.ops.auth.decorators.get_user_from_userinfo")
-    m1.return_value = User(status=UserStatus.INACTIVE)
-
-    # the JSON {"provider": "fakeauth", "code": "admin_user"} here is used as a stub to avoid the actual auth process
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert res.status_code == 401
+    assert res.json["error_type"] == "USER_INACTIVE"
 
 
-def test_login_fails_with_locked_status(client, loaded_db, mocker):
-    m1 = mocker.patch("ops_api.ops.auth.decorators.get_user_from_userinfo")
-    m1.return_value = User(status=UserStatus.LOCKED)
+def test_sso_callback_fails_with_locked_user(client, loaded_db, mocker):
+    m1 = mocker.patch("ops_api.ops.auth.service.login_sso")
+    m1.side_effect = UserLockedError("locked")
 
-    # the JSON {"provider": "fakeauth", "code": "basic_user"} here is used as a stub to avoid the actual auth process
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert res.status_code == 401
-    assert res.json["error_type"] == LoginErrorTypes.USER_LOCKED.name
-    assert res.json["message"] == "The user is LOCKED. Please contact the system administrator."
-
-
-def test_login_fails_with_null_status(client, loaded_db, mocker):
-    m1 = mocker.patch("ops_api.ops.auth.decorators.get_user_from_userinfo")
-    m1.return_value = User(status=None)
-
-    # the JSON {"provider": "fakeauth", "code": "basic_user"} here is used as a stub to avoid the actual auth process
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
-    assert res.status_code == 401
+    assert res.json["error_type"] == "USER_LOCKED"

@@ -14,6 +14,8 @@ describe("opsAuthApi", () => {
             expect(opsAuthApi.reducerPath).toBe("opsAuthApi");
             expect(opsAuthApi.endpoints.getRoles).toBeDefined();
             expect(opsAuthApi.endpoints.login).toBeDefined();
+            expect(opsAuthApi.endpoints.ssoCallback).toBeDefined();
+            expect(opsAuthApi.endpoints.ssoSession).toBeDefined();
             expect(opsAuthApi.endpoints.logout).toBeDefined();
             expect(opsAuthApi.endpoints.getUserProfile).toBeDefined();
         });

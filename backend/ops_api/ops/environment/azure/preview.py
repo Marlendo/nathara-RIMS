@@ -29,9 +29,6 @@ SQLALCHEMY_POOL_TIMEOUT = 10
 HEALTH_CHECK_AUTH_SERVICES = False
 
 # FakeAuth only (no HHS AMS), reusing dev's client but redirecting to this PR's frontend.
-AUTHLIB_OAUTH_CLIENTS = {
-    "fakeauth": {
-        **AUTHLIB_OAUTH_CLIENTS["fakeauth"],  # noqa: F405
-        "redirect_uri": f"{OPS_FRONTEND_URL}/login",
-    },
-}
+
+# MIGRATION (PM RIMS 0001): AUTHLIB provider lama DIMATIKAN (dict kosong).
+AUTHLIB_OAUTH_CLIENTS = {}

@@ -1,3 +1,4 @@
+%% MIGRATION (PM RIMS 0001 — Nathara RIMS): diagram ini menggambarkan alur AUTH LAMA yang SUDAH DIMATIKAN. Alur berlaku: User -> SSO Nathara (Supabase prod) -> FE callback -> POST /auth/sso/callback -> sesi app (guard admin+RIMS, default deny 403).
 sequenceDiagram
     autonumber
     participant User

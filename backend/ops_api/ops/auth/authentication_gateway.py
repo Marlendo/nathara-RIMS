@@ -1,37 +1,27 @@
-from authlib.oauth2.rfc6749 import OAuth2Token
-from flask import Config
+"""MIGRATION (PM RIMS 0001): AuthenticationGateway DIMATIKAN.
 
-from ops_api.ops.auth.auth_types import UserInfoDict
-from ops_api.ops.auth.authentication_provider.authentication_provider_factory import (
-    AuthenticationProviderFactory,
-)
-from ops_api.ops.auth.decorators import is_user_active
+Legacy OAuth gateway (3 legacy providers via factory) diganti adapter SSO
+Supabase prod: ops_api.ops.auth.supabase_sso_provider (validasi RS256 via
+JWKS + cache). File ini dipertahankan sebagai stub agar import lama gagal
+secara eksplisit (fail-closed), bukan diam-diam lolos.
+"""
+
+from ops_api.ops.auth.exceptions import AuthenticationError
 
 
 class AuthenticationGateway:
-    def __init__(self, config: Config) -> None:
-        for provider in config["AUTHLIB_OAUTH_CLIENTS"]:
-            if provider not in ["fakeauth", "logingov", "hhsams"]:
-                raise ValueError(f"Invalid provider {provider}")
-        self.providers = {
-            provider: AuthenticationProviderFactory.create_provider(provider, config)
-            for provider in config["AUTHLIB_OAUTH_CLIENTS"]
-        }
+    """Stub mati — JANGAN dipakai. Pakai supabase_sso_provider."""
 
-    @is_user_active
-    def authenticate(self, provider_name, auth_code) -> OAuth2Token | None:
-        """
-        Authenticate with the provider and return a valid JWT.
+    def __init__(self, config=None) -> None:
+        raise AuthenticationError(
+            "Login lama dimatikan (PM RIMS 0001). Gunakan SSO Nathara via /auth/sso/callback."
+        )
 
-        This uses the auth_code from the first step of authentication to get a token from the provider.
-        """
-        return self.providers[provider_name].authenticate(auth_code)
+    def authenticate(self, provider_name, auth_code):
+        raise AuthenticationError("Login lama dimatikan (PM RIMS 0001).")
 
-    def get_user_info(self, provider: str, token: str) -> UserInfoDict | None:
-        """
-        Get user info from the provider using the token.
-        """
-        return self.providers[provider].get_user_info(token)
+    def get_user_info(self, provider: str, token: str):
+        raise AuthenticationError("Login lama dimatikan (PM RIMS 0001).")
 
     def validate_token(self, provider: str, token: str):
-        return self.providers[provider].validate_token(token)
+        raise AuthenticationError("Login lama dimatikan (PM RIMS 0001).")

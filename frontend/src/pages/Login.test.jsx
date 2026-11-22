@@ -22,9 +22,11 @@ describe("Login", () => {
             </Provider>
         );
 
-        expect(screen.getByText("Portfolio Management System")).toBeInTheDocument();
-        const signInOptions = screen.getAllByText(/sign in/i);
-        expect(signInOptions).toHaveLength(3);
+        expect(screen.getAllByText("Nathara RIMS").length).toBeGreaterThanOrEqual(1);
+        // Satu-satunya jalur login: tombol SSO Nathara (PM RIMS 0001).
+        expect(screen.getByText("Masuk dengan SSO Nathara")).toBeInTheDocument();
+        expect(screen.queryByText(/HHS AMS/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/FakeAuth/)).not.toBeInTheDocument();
     });
 
     it("should display a general error message when there is a login error", () => {
@@ -53,7 +55,7 @@ describe("Login", () => {
             </Provider>
         );
 
-        expect(screen.getByText(/ORBIT/)).toBeInTheDocument();
+        expect(screen.getByText(/kanal support LPPM/)).toBeInTheDocument();
         expect(screen.getByText("Sign-In Failed")).toBeInTheDocument();
     });
 });

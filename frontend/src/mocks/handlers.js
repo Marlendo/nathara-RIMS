@@ -18,7 +18,7 @@ const buildMockJwt = (payloadOverrides = {}) => {
     const nowSeconds = Math.floor(Date.now() / 1000);
     const payload = {
         sub: "00000000-0000-1111-a111-000000000018",
-        iss: "https://opre-ops-backend-dev",
+        iss: "https://nathara-rims-backend-dev",
         exp: nowSeconds + 60 * 60,
         ...payloadOverrides
     };
@@ -37,15 +37,21 @@ const mockUser = {
 };
 
 export const authHandlers = [
-    // Login endpoint
-    http.post(`${BACKEND_DOMAIN}/auth/login/`, async ({ request }) => {
+    // MIGRATION (PM RIMS 0001): login lama (provider/code) DIMATIKAN -> 410.
+    http.post(`${BACKEND_DOMAIN}/auth/login/`, async () => {
+        return new HttpResponse(
+            JSON.stringify({ message: "Login lama dimatikan (PM RIMS 0001). Gunakan POST /auth/sso/callback." }),
+            { status: 410 }
+        );
+    }),
+
+    // SSO Nathara: tukar supabase_jwt -> sesi app (mock).
+    http.post(`${BACKEND_DOMAIN}/auth/sso/callback`, async ({ request }) => {
         const body = await request.json();
-        const { provider } = body;
         const accessToken = buildMockJwt();
         const refreshToken = buildMockJwt({ exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 });
 
-        // Mock different responses based on provider and code
-        if (provider === "fakeauth") {
+        if (body?.supabase_jwt) {
             return HttpResponse.json({
                 access_token: accessToken,
                 refresh_token: refreshToken,
@@ -54,17 +60,18 @@ export const authHandlers = [
             });
         }
 
-        if (provider === "logingov" || provider === "hhsams") {
-            return HttpResponse.json({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-                token_type: "Bearer",
-                expires_in: 3600
-            });
-        }
+        return new HttpResponse(JSON.stringify({ message: "Payload SSO tidak valid." }), { status: 400 });
+    }),
 
-        // Return error for unknown providers
-        return new HttpResponse(JSON.stringify({ error: "Invalid provider" }), { status: 400 });
+    // SSO session (mock).
+    http.get(`${BACKEND_DOMAIN}/auth/sso/session`, async () => {
+        return HttpResponse.json({
+            user_id: 1,
+            email: "test.user@example.com",
+            status: "ACTIVE",
+            supabase_sub: "mock-sub",
+            roles: ["system_owner"]
+        });
     }),
 
     // Refresh token endpoint

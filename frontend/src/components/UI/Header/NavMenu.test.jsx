@@ -124,7 +124,7 @@ describe("NavMenu", () => {
 
             const reportingButton = screen.getByRole("button", { name: "Reporting" });
             await user.click(reportingButton);
-            screen.getByRole("link", { name: "OPRE Budget Reporting" }).focus();
+            screen.getByRole("link", { name: "Nathara RIMS Budget Reporting" }).focus();
 
             await user.keyboard("{Escape}");
 

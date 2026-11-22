@@ -60,17 +60,9 @@ def test_preview_csrf_rejects_another_prs_frontend(preview_app):
         )
 
 
-def test_preview_config_is_fakeauth_only_and_redirects_to_its_own_frontend(monkeypatch):
+def test_preview_config_disables_legacy_oauth_and_uses_sso(monkeypatch):
+    # MIGRATION (PM RIMS 0001): provider lama DIMATIKAN (dict kosong), SSO via SUPABASE_*.
     config = load_preview_config(monkeypatch)
 
-    assert list(config["AUTHLIB_OAUTH_CLIENTS"]) == ["fakeauth"]
-    assert config["AUTHLIB_OAUTH_CLIENTS"]["fakeauth"]["redirect_uri"] == f"{FRONTEND_URL}/login"
-
-
-def test_preview_config_reuses_dev_fakeauth_client(monkeypatch):
-    preview = load_preview_config(monkeypatch)["AUTHLIB_OAUTH_CLIENTS"]["fakeauth"]
-    dev = runpy.run_path(str(PREVIEW_CONFIG.with_name("dev.py")))["AUTHLIB_OAUTH_CLIENTS"]["fakeauth"]
-
-    assert {k: v for k, v in preview.items() if k != "redirect_uri"} == {
-        k: v for k, v in dev.items() if k != "redirect_uri"
-    }
+    assert config["AUTHLIB_OAUTH_CLIENTS"] == {}
+    assert config["SUPABASE_JWKS_URL"].startswith("https://")

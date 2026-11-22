@@ -1,5 +1,5 @@
 /*
-NOTE: This file contains the release notes data for the OPS application.
+NOTE: This file contains the release notes data for the Nathara RIMS application.
 NOTE: Each release is an object with a version, date, and an array of changes.
 NOTE: Each change has an id, subject, type, and description.
 NOTE: types of changes are 'New Feature', 'Improvements', 'Fixes'
@@ -25,10 +25,10 @@ export const data = [
             },
             {
                 id: "0003",
-                subject: "Redesigned OPS Home Page",
+                subject: "Redesigned Nathara RIMS Home Page",
                 type: "Improvements",
                 description:
-                    'We redesigned the OPS home page to focus on what\'s new and what\'s coming next. You\'ll see a personalized welcome message, a "What\'s New" tab with the latest updates, an "OPS Benefits" tab, and an "OPS at a Glance" tab showing what we\'re currently working on.'
+                    'We redesigned the Nathara RIMS home page to focus on what\'s new and what\'s coming next. You\'ll see a personalized welcome message, a "What\'s New" tab with the latest updates, an "Nathara RIMS Benefits" tab, and an "Nathara RIMS at a Glance" tab showing what we\'re currently working on.'
             },
             {
                 id: "0004",
@@ -110,7 +110,7 @@ export const data = [
                 subject: "View a Grant",
                 type: "New Feature",
                 description:
-                    "You can now view a grant's details in OPS, including attributes unique to grants and a summary of budget lines organized by grant number."
+                    "You can now view a grant's details in Nathara RIMS, including attributes unique to grants and a summary of budget lines organized by grant number."
             },
             {
                 id: "0002",
@@ -131,7 +131,7 @@ export const data = [
                 subject: "Grant ALN Numbers",
                 type: "Improvements",
                 description:
-                    "The ALN numbers dropdown for grants now displays the real ALN numbers from OPRE instead of placeholder values."
+                    "The ALN numbers dropdown for grants now displays the real ALN numbers instead of placeholder values."
             }
         ]
     },
@@ -144,7 +144,7 @@ export const data = [
                 subject: "Create a grant",
                 type: "New Feature",
                 description:
-                    "You can now create grants in OPS! This includes adding grant-specific details such as the NOFO number, budget periods, ALN numbers and grant numbers."
+                    "You can now create grants in Nathara RIMS! This includes adding grant-specific details such as the NOFO number, budget periods, ALN numbers and grant numbers."
             },
             {
                 id: "0002",
@@ -172,11 +172,11 @@ export const data = [
                 subject: "Project dropdown now shows all projects",
                 type: "Fixes",
                 description:
-                    "We fixed a bug related to the project dropdown not displaying all available projects in OPS."
+                    "We fixed a bug related to the project dropdown not displaying all available projects."
             },
             {
                 id: "0006",
-                subject: "Reducing approvals across OPS",
+                subject: "Reducing approvals across Nathara RIMS",
                 type: "Improvements",
                 description:
                     "Moving budget lines from Draft to Planned (and edits within Planned status) no longer requires an approval from a division director, streamlining routine budget work."
@@ -288,7 +288,7 @@ export const data = [
                 subject: "Missing procurement tracker for executing budget lines",
                 type: "Fixes",
                 description:
-                    "Some budget lines in executing status did not have an active procurement tracker as expected because they were migrated instead of manually entered inside OPS. We've since deployed a fix so that all budget lines in executing status will have a procurement tracker, regardless if they were migrated or entered into OPS manually."
+                    "Some budget lines in executing status did not have an active procurement tracker as expected because they were migrated instead of manually entered inside Nathara RIMS. We've since deployed a fix so that all budget lines in executing status will have a procurement tracker, regardless if they were migrated or entered manually."
             }
         ]
     },
@@ -301,7 +301,7 @@ export const data = [
                 subject: "View a list of projects",
                 type: "Improvements",
                 description:
-                    "You can now view a list of all projects in OPS including a breakdown of research projects vs admin & support projects. The table includes project names, types, start dates, end dates, FY totals and lifetime totals, as well as additional information on what agreements are included. You can utilize filters to search or narrow down your results, and export to download the data to an excel file."
+                    "You can now view a list of all projects including a breakdown of research projects vs admin & support projects. The table includes project names, types, start dates, end dates, FY totals and lifetime totals, as well as additional information on what agreements are included. You can utilize filters to search or narrow down your results, and export to download the data to an excel file."
             },
             {
                 id: "0002",
@@ -369,7 +369,7 @@ export const data = [
                 subject: "Sub-Services Components",
                 type: "Improvements",
                 description:
-                    "A new tooltip will display on the edit and delete actions for sub-services components, reminding you that this is legacy data from MAPS that cannot be changed in the OPS user interface. If you need to edit or delete these services components, please submit a Budget Support Request through ORBIT. For more information, please check out the FAQ on “Is there a way to create sub services components, such as SC2-A, SC2-B, SC2-C?”"
+                    "A new tooltip will display on the edit and delete actions for sub-services components, reminding you that this is legacy data from MAPS that cannot be changed in the Nathara RIMS user interface. If you need to edit or delete these services components, please submit a Budget Support Request melalui kanal support LPPM (lppm.nathara.ac.id). For more information, please check out the FAQ on “Is there a way to create sub services components, such as SC2-A, SC2-B, SC2-C?”"
             },
             {
                 id: "0003",
@@ -383,7 +383,7 @@ export const data = [
                 subject: "Portfolios List",
                 type: "Improvements",
                 description:
-                    "Based on your feedback, the Portfolios List now includes a graph that shows a breakdown of the OPRE budget across portfolios. The table below includes a snapshot of each portfolio's FY budget, spending and available/remaining budget. Filters enable you to adjust your view by portfolio, FY budget or % budget available."
+                    "Based on your feedback, the Portfolios List now includes a graph that shows a breakdown of the the institution budget across portfolios. The table below includes a snapshot of each portfolio's FY budget, spending and available/remaining budget. Filters enable you to adjust your view by portfolio, FY budget or % budget available."
             },
             {
                 id: "0005",
@@ -400,10 +400,10 @@ export const data = [
         changes: [
             {
                 id: "0001",
-                subject: "Updated ORBIT Process",
+                subject: "Updated kanal support LPPM Process",
                 type: "Fixes",
                 description:
-                    "OPS-support will now be directed to ORBIT instead of emailing opre-ops-support@flexion.us This has been updated throughout OPS and in the OPS User Guide."
+                    "Nathara RIMS-support will now be directed to kanal support LPPM instead of emailing nathara-rims-support@flexion.us This has been updated throughout Nathara RIMS and in the Nathara RIMS User Guide."
             },
             {
                 id: "0002",
@@ -431,7 +431,7 @@ export const data = [
                 subject: "Edit an Assisted Acquisition",
                 type: "New Feature",
                 description:
-                    "Contracts are no longer the only agreement type available in OPS. You can now also edit details (including services components and budget lines) for assisted acquisitions."
+                    "Contracts are no longer the only agreement type available in Nathara RIMS. You can now also edit details (including services components and budget lines) for assisted acquisitions."
             }
         ]
     },
@@ -470,7 +470,7 @@ export const data = [
                 subject: "View an Assisted Acquisition",
                 type: "New Feature",
                 description:
-                    "Contracts are no longer the only agreement type available in OPS. You can now also view all details for assisted acquisitions (AAs). This includes the unique attributes to AAs such as who the agreement is between (requesting and servicing agency) or other AA-specific details. This work will also remove the alert from the top of AA agreement pages showing which agreement types are still being developed."
+                    "Contracts are no longer the only agreement type available in Nathara RIMS. You can now also view all details for assisted acquisitions (AAs). This includes the unique attributes to AAs such as who the agreement is between (requesting and servicing agency) or other AA-specific details. This work will also remove the alert from the top of AA agreement pages showing which agreement types are still being developed."
             },
             {
                 id: "0003",
@@ -504,14 +504,14 @@ export const data = [
                 subject: "Agreements Updated with Correct Procurement Shops",
                 type: "New Feature",
                 description:
-                    "All agreements in OPS have been recently updated with their correct procurement shop. However, the fee rate of each procurement shop is not currently displayed, but will be soon. This means your agreement totals might still be a little off until the total fees are applied.."
+                    "All agreements in Nathara RIMS have been recently updated with their correct procurement shop. However, the fee rate of each procurement shop is not currently displayed, but will be soon. This means your agreement totals might still be a little off until the total fees are applied.."
             },
             {
                 id: "0004",
                 subject: "Number Formatting on Exports",
                 type: "Improvements",
                 description:
-                    "When you export a spreadsheet from OPS, columns for currency ($) will now appear as plain text which enables pivot tables and calculations on the data."
+                    "When you export a spreadsheet from Nathara RIMS, columns for currency ($) will now appear as plain text which enables pivot tables and calculations on the data."
             }
         ]
     },
@@ -521,10 +521,10 @@ export const data = [
         changes: [
             {
                 id: "0001",
-                subject: "OPS Release Notes & What's Next",
+                subject: "Nathara RIMS Release Notes & What's Next",
                 type: "New Feature",
                 description:
-                    "You can now view details about what's new and what's next directly in OPS instead of referencing the google document."
+                    "You can now view details about what's new and what's next directly in Nathara RIMS instead of referencing the google document."
             },
             {
                 id: "0002",
@@ -538,7 +538,7 @@ export const data = [
                 subject: "Alphabetical Sorting on Team Members Selection/Dropdown Menu",
                 type: "Improvements",
                 description:
-                    "When you add a Project Officer or team member to an agreement, the list of OPRE staff is now sorted alphabetically by first name so it’s easier to find a specific individual."
+                    "When you add a Project Officer or team member to an agreement, the list of the institution staff is now sorted alphabetically by first name so it’s easier to find a specific individual."
             },
             {
                 id: "0004",
@@ -551,7 +551,7 @@ export const data = [
                 id: "0005",
                 subject: "OCDO Portfolios",
                 type: "Improvements",
-                description: "The OCDO-related portfolios were recently added into OPS."
+                description: "The OCDO-related portfolios were recently added into Nathara RIMS."
             }
         ]
     }

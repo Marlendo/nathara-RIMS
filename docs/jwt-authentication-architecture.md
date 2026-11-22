@@ -1,3 +1,5 @@
+> MIGRATION (PM RIMS 0001 — Nathara RIMS): dokumen ini menggambarkan arsitektur AUTH LAMA (HHS AMS/Login.gov + keypair JWT) yang SUDAH DIMATIKAN. Arsitektur berlaku: SSO Supabase prod (`https://api.nathara.ac.id`, JWT RS256 validasi via JWKS + cache 10 mnt, guard `role == 'admin' AND scope == 'RIMS'`, endpoint `POST /auth/sso/callback`, `GET /auth/sso/session`, `POST /auth/logout`). Lihat `plan/pm_rims_0001_sso_rebrand.md` + `plan/sa_rims_0001_sso_rebrand_analysis.md`.
+
 # JWT Authentication Architecture
 
 ## Overview

@@ -24,8 +24,8 @@ def document_repository_factory():
 
 @pytest.fixture()
 def repository(document_repository_factory):
-    document_repository_factory.register_provider("mockfakeauth", FakeDocumentRepository())
-    return document_repository_factory.create_repository("mockfakeauth")
+    document_repository_factory.register_provider("mockprovider", FakeDocumentRepository())
+    return document_repository_factory.create_repository("mockprovider")
 
 
 class TestDocumentRepositoryFactory(BaseDocumentTestCase):

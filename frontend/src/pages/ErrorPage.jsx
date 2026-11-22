@@ -29,7 +29,7 @@ const ErrorPage = () => {
                             </p>
                             <p>
                                 If you continue to experience this issue, please{" "}
-                                <a href={SUPPORT_URL}>submit a Budget Support Request through ORBIT.</a>
+                                <a href={SUPPORT_URL}>submit a Budget Support Request melalui kanal support LPPM (lppm.nathara.ac.id).</a>
                             </p>
                         </div>
                     </div>

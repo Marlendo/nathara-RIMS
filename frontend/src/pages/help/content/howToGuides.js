@@ -1,15 +1,15 @@
 // Markdown Guide https://www.markdownguide.org/basic-syntax/
 export const data = [
     {
-        heading: "How to sign-in to OPS",
+        heading: "How to sign-in to Nathara RIMS",
         content: `
 <a href="https://hhsgov.sharepoint.com/:v:/s/OPREPortfoliomanagementSystemOCIO/EXgTKDhuuJ9Mv0RF5QC2zy4BSu8XezAqgRKyclZOVp9gRA?e=FkhpFF" target="_blank" rel="noopener noreferrer">Watch the How-to Video</a>
 
 1. Navigate to [https://ops.opre.acf.gov/](https://ops.opre.acf.gov/)
-1. Click the button to **Sign in with HHS AMS**
+1. Click the button **Masuk dengan SSO Nathara**
     - The page will redirect to HHS Access Management System (AMS)
-1. Enter your HHS AMS login information to authenticate with your PIV card
-    - You do not need to create a specific account for OPS. You will sign in using your HHS AMS account.
+1. Masuk menggunakan akun SSO Nathara Anda
+    - Gunakan akun SSO Nathara Anda untuk masuk ke Nathara RIMS.
       `
     },
     {
@@ -17,7 +17,7 @@ export const data = [
         content: `
 <a href="https://hhsgov.sharepoint.com/:v:/s/OPREPortfoliomanagementSystemOCIO/Ef5QcsFYb2NLhV5bAG9VidIBhnK2rGjBsF8RzWx1S66vCA?e=V1Hgsy" target="_blank" rel="noopener noreferrer">Watch the How-to Video</a>
 
-1. Click on your email address on the top right of the OPS header
+1. Click on your email address on the top right of the Nathara RIMS header
 1. View the information for role(s)
       `
     },
@@ -107,7 +107,7 @@ export const data = [
       - If you are not listed as a team member on the agreement
       - If the agreement is In Review for Pre-Award in the procurement tracker
       - If the agreement is In Review for Award in the procurement tracker
-      - If the agreement type is not yet developed in OPS
+      - If the agreement type is not yet developed in Nathara RIMS
 1. Scroll down to **Project Title** or **Nickname** (4th data field from the top)
 1. Update the **Project**, as needed
 1. Scroll down and click **Save Changes**
@@ -267,9 +267,9 @@ export const data = [
       `
     },
     {
-        heading: "How to export data from OPS",
+        heading: "How to export data from Nathara RIMS",
         content: `
-1. There are multiple ways to export data from OPS
+1. There are multiple ways to export data from Nathara RIMS
     - From any of the List Pages (Portfolios, projects, agreements, budget lines)
     - OR from an individual agreement
 1. If you'd like to export a list of portfolios...
@@ -293,21 +293,21 @@ export const data = [
     - Click on the **SCs & Budget Lines** tab for contracts/AAs, or the **Grants & Budget Lines** tab for grants
     - Click **Export** on the far right, next to Filters
     - This will export an .xslx file to your downloads folder
-1. Please note: exports from the list pages will default to the full data set across OPS. If you'd like to export a more focused data set for a specific portfolio or FY, you can apply filters before or after exporting.
-    - Refer to the OPS Data Pull Steps for OPRE Leadership to export OPS data for your specific portfolio(s) only
+1. Please note: exports from the list pages will default to the full data set across Nathara RIMS. If you'd like to export a more focused data set for a specific portfolio or FY, you can apply filters before or after exporting.
+    - Refer to the Data Pull Steps to export data for your specific portfolio(s) only
 1. The file name for exports is formatted with YYYY-MM-DD-Time. The last 6 numbers are the timestamp of the export.
       `
     },
     {
-        heading: "How to share OPS feedback or get support through ORBIT",
+        heading: "How to share feedback or get support via LPPM",
         content: `
-1. Navigate to <a href="https://opre-orbit.zendesk.com" target="_blank" rel="noopener noreferrer">ORBIT</a>
+1. Hubungi kanal support LPPM (lppm.nathara.ac.id)
 1. Click on **Submit a Request**
 1. Select **Budget Support** under Request Type
 1. Provide a Subject for your request
 1. Select an option to describe what the Budget Support Request is for
-    - Select **Access to OPS** if you need to create a new OPS account or re-active an existing one
-    - Select **Issue with OPS** if you'd like to report a problem or share other feedback
+    - Select **Access to Nathara RIMS** if you need to create a new Nathara RIMS account or re-active an existing one
+    - Select **Issue with Nathara RIMS** if you'd like to report a problem or share other feedback
 1. Select an Urgency rating
     - Low
     - Medium/Normal
@@ -315,13 +315,13 @@ export const data = [
     - Urgent
 1. Select a target deadline
 1. Provide your Program Office/Division
-1. Provide the OPS Access Type or OPS Issue Type
-    - For Access to OPS
+1. Provide the access type or issue type
+    - For Access to Nathara RIMS
       - Select whether this request is for a New User or Reactivate Account
-    - For Issues with OPS
+    - For Issues with Nathara RIMS
       - Select whether this request is for a User Issue/Report a Bug or Feedback (including likes, dislikes or future improvements)
-1. Provide your OPRE Staff Role
-1. Provide your OPS User Role
+1. Provide your staff role
+1. Provide your user role
 1. Enter the details of your request
     - Provide optional attachments, if needed
 1. Click **Submit**
@@ -354,18 +354,18 @@ export const data = [
       `
     },
     {
-        heading: "How to update existing CANs in OPS (Budget team only)",
+        heading: "How to update existing CANs (Budget team only)",
         content: `
 *At the start of each fiscal year (FY), the budget team will update the current CANs based on the new year's appropriations. Annual CANs are updated to show the new FY appropriations information. Multiyear CANS are updated to show they are available for use in the new FY, but their appropriations do not change*
 
 1. Download the PSC-CAN-BACS Crosswalk Report for the new FY
 1. Filter the CAN-BACs to ACF CANs only
-1. Email the spreadsheet to the OPS team and request that any existing CANs in OPS be updated according to the spreadsheet
-1. After the import is complete, all CANs included in the spreadsheet, that have a match in OPS, will appear under the Current FY on the CANs list and be available for selection by CORs and other staff when creating or updating budget lines
-1. Manually enter the FY Budget and Funding Received YTD in OPS (see how-to add a FY budget and how-to add funding received below)
+1. Email the spreadsheet to the support team and request that any existing CANs be updated according to the spreadsheet
+1. After the import is complete, all CANs included in the spreadsheet, that have a match, will appear under the Current FY on the CANs list and be available for selection by CORs and other staff when creating or updating budget lines
+1. Manually enter the FY Budget and Funding Received YTD (see how-to add a FY budget and how-to add funding received below)
 
-**What OPS does during the update**
-*When the import is run, OPS automatically:*
+**What the system does during the update**
+*When the import is run, the system automatically:*
 
 1. Matches each CAN using the Allowance Code and Allotment Code
 1. Updates an existing CAN if a match is found
@@ -378,9 +378,9 @@ export const data = [
       `
     },
     {
-        heading: "How to add new CANs in OPS (Budget team only)",
+        heading: "How to add new CANs (Budget team only)",
         content: `
-*At the start of each fiscal year (FY), or as needed throughout the FY, the budget team will add new CANs to OPS by providing additional meta-data required.*
+*At the start of each fiscal year (FY), or as needed throughout the FY, the budget team will add new CANs by providing additional meta-data required.*
 
 1. Download the PSC-CAN-BACS Crosswalk Report for the new FY
 1. Filter the CAN-BACs to ACF CANs only
@@ -390,9 +390,9 @@ export const data = [
     - Method of Transfer
     - Nickname
     - Funding Partner
-1. Email the spreadsheet to the OPS team and request that the new CANs be added into OPS
-1. After the import is complete, all CANs included in the spreadsheet, that are new to OPS, will appear under the Current FY on the CANs list and be available for selection by CORs and other staff when creating or updating budget lines
-1. Manually enter the FY Budget and Funding Received YTD in OPS (see how-to add a FY budget and how-to add funding received below)
+1. Email the spreadsheet to the support team and request that the new CANs be added
+1. After the import is complete, all CANs included in the spreadsheet, that are new, will appear under the Current FY on the CANs list and be available for selection by CORs and other staff when creating or updating budget lines
+1. Manually enter the FY Budget and Funding Received YTD (see how-to add a FY budget and how-to add funding received below)
       `
     },
     {
@@ -426,7 +426,7 @@ export const data = [
     {
         heading: "How to add funding received to a CAN (Budget team only)",
         content: `
-Funding received means funding received to OPRE towards a CANs FY budget
+Funding received means funding received towards a CANs FY budget
 
 <a href="https://hhsgov.sharepoint.com/:v:/s/OPREPortfoliomanagementSystemOCIO/EbuROeU5NhlOnfrJ9jye8rwBfj2bZrUg0S_ZoRbLjTRhPA?e=zJ7MHV" target="_blank" rel="noopener noreferrer">Watch the How-to Video</a>
 

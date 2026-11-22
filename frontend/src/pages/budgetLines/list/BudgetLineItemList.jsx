@@ -151,7 +151,7 @@ const BudgetLineItemList = () => {
             <TablePageLayout
                 title="Budget Lines"
                 subtitle={myBudgetLineItemsUrl ? "My Budget Lines" : "All Budget Lines"}
-                details="This is a list of budget lines across all OPRE for the selected fiscal year."
+                details="This is a list of budget lines across the institution for the selected fiscal year."
                 TabsSection={<BLITags />}
                 FilterTags={
                     <>

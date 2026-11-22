@@ -31,28 +31,18 @@ export const callBackend = async (urlPath, action, requestBody, queryParams, use
     return response.data;
 };
 
+// MIGRATION (PM RIMS 0001): authConfig provider lama DIMATIKAN.
+// Login kini via SSO Nathara (Supabase Auth prod). FE hanya butuh URL login
+// dan anon key publik Supabase; secret TIDAK PERNAH di FE.
+// TODO-SSOT: isi VITE_SUPABASE_AUTH_URL + VITE_SUPABASE_ANON_KEY final dari PM Production.
 export const authConfig = {
-    hhsams: {
+    natharaSso: {
         auth_endpoint:
-            import.meta.env.VITE_HHSAMS_AUTH_ENDPOINT ||
-            "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/auth",
-        client_id: import.meta.env.VITE_HHSAMS_CLIENT_ID || "44fe2c7a-e9c5-43ec-87e9-3de78d2d3a11",
+            import.meta.env.VITE_SUPABASE_AUTH_URL || "/login",
         response_type: "code",
         scope: "openid profile email",
         redirect_uri: `${typeof window !== "undefined" ? window.location.origin : "http://localhost"}/login`,
-        acr_values: 1,
-        logout_endpoint:
-            import.meta.env.VITE_HHSAMS_LOGOUT_ENDPOINT ||
-            "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/logout"
-    },
-    logingov: {
-        auth_endpoint: "https://idp.int.identitysandbox.gov/openid_connect/authorize",
-        client_id: "urn:gov:gsa:openidconnect.profiles:sp:sso:hhs_acf:opre_ops",
-        response_type: "code",
-        scope: "openid email",
-        redirect_uri: `${typeof window !== "undefined" ? window.location.origin : "http://localhost"}/login`,
-        acr_values: "http://idmanagement.gov/ns/assurance/ial/1",
-        logout_endpoint: "https://idp.int.identitysandbox.gov/openid_connect/logout"
+        logout_endpoint: "/login"
     }
 };
 

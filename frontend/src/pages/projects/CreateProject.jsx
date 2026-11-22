@@ -157,7 +157,7 @@ const CreateProject = () => {
                 name="description"
                 label="Description"
                 onChange={handleChange}
-                hintMsg="Brief description for internal purposes, not for the OPRE website."
+                hintMsg="Brief description for internal purposes, not for the public website."
                 messages={res.getErrors("description")}
                 value={project.description || ""}
                 className={cn("description")}

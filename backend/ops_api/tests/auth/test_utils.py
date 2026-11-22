@@ -1,3 +1,5 @@
+"""MIGRATION (PM RIMS 0001): create_oauth_jwt/keypair lama DIMATIKAN."""
+
 import time
 import uuid
 from uuid import UUID
@@ -12,54 +14,43 @@ from sqlalchemy import select
 
 from models.users import User
 from ops_api.ops.auth.authorization_providers import AuthorizationGateway
-from ops_api.ops.auth.utils import create_oauth_jwt, get_user
+from ops_api.ops.auth.exceptions import PrivateKeyError
+from ops_api.ops.auth.utils import create_oauth_jwt, get_user, is_token_expired
 
 key = rsa.generate_private_key(backend=default_backend(), public_exponent=65537, key_size=2048)
 
 
 def test_get_jwt_no_key(app):
-    with app.test_request_context("/auth/login", method="POST", data={"provider": "fakeauth", "code": ""}):
-        jwt1 = create_oauth_jwt(
-            "fakeauth",
-            app.config,
-            key=key,
-            header={"alg": "RS256"},
-            payload={
-                "sub": "1234567890",
-                "name": "John Doe",
-                "admin": "true",
-                "iat": 1516239022,
-            },
-        )
-        assert jwt is not None
-        assert len(str(jwt1)) == 477
-
-        decoded = jwt.decode(jwt1, key.public_key())
-        assert decoded["sub"] == "1234567890"
+    # keypair lama DIMATIKAN: create_oauth_jwt selalu raise PrivateKeyError.
+    with app.test_request_context("/auth/sso/callback", method="POST", data={"supabase_jwt": "x"}):
+        with pytest.raises(PrivateKeyError):
+            create_oauth_jwt(
+                "nathara-sso",
+                app.config,
+                key=key,
+                header={"alg": "RS256"},
+                payload={
+                    "sub": "1234567890",
+                    "name": "John Doe",
+                    "admin": "true",
+                    "iat": 1516239022,
+                },
+            )
 
 
-@pytest.mark.skip(reason="Need to clean up auth a bit")
-def test_get_jwt_is_valid_jws(app, app_ctx):
-    header = {"alg": "RS256"}
-    payload = {
-        "iss": "client_id",
-        "sub": "client_id",
-        "aud": "https://some.endpoint.test",
-        "jti": str(uuid.uuid4()),
-        "exp": int(time.time()) + 300,
-    }
-    jws = create_oauth_jwt("fakeauth", app.config, key=key, header=header, payload=payload)
-    print(f"jws: {jws}")
-    assert jws is not None
+def test_is_token_expired_without_secret_key():
+    # Expiry dibaca dari klaim tanpa secret (pemanggil wajib validasi
+    # tanda tangan via verify_supabase_jwt terlebih dulu).
+    import base64
+    import json as _json
 
+    def _unsigned(payload: dict) -> str:
+        body = base64.urlsafe_b64encode(_json.dumps(payload).encode()).rstrip(b"=").decode()
+        return f"header.{body}.sig"
 
-@pytest.mark.skip("Need to work out better key management for TESTS")
-def test_create_access_token(loaded_db, app, app_ctx):
-    user = loaded_db.session.get(User, "00000000-0000-1111-a111-000000000001")
-    access_token = create_access_token(identity=user)
-    pub_key = current_app.config.get("JWT_PUBLIC_KEY")
-    decoded = jwt.decode(access_token, pub_key)
-    assert decoded["sub"] == user.oidc_id
+    assert is_token_expired(_unsigned({"exp": int(time.time()) - 10})) is True
+    assert is_token_expired(_unsigned({"exp": int(time.time()) + 600})) is False
+    assert is_token_expired("not-a-jwt") is True
 
 
 def test_authorization_gateway_authorize_successful(mocker, app_ctx):
@@ -91,7 +82,7 @@ def user_with_no_oidc_id(loaded_db):
 
 
 @pytest.fixture()
-def hhsams_user_info():
+def sso_user_info():
     yield {
         "sub": "6b3f72cb-0c04-4eff-94b3-fa012f63a9c6",
         "aud": "1aba44a4-4fd3-4d8b-a4bc-d8afecc6abb7",
@@ -143,18 +134,18 @@ def test_get_user(user_with_no_oidc_id, loaded_db):
     assert user.oidc_id == UUID("9b5b5b5e-5288-401d-8267-a80605cce16f")
 
 
-def test_get_user_info_set(loaded_db, hhsams_user_info):
-    user = User(oidc_id=UUID(hhsams_user_info["sub"]), email="replace me")
+def test_get_user_info_set(loaded_db, sso_user_info):
+    user = User(oidc_id=UUID(sso_user_info["sub"]), email="replace me")
     loaded_db.add(user)
     loaded_db.commit()
 
-    user = get_user(hhsams_user_info, loaded_db)
+    user = get_user(sso_user_info, loaded_db)
     assert user is not None
-    assert user.oidc_id == UUID(hhsams_user_info["sub"])
-    assert user.email == hhsams_user_info["email"]
-    assert user.first_name == hhsams_user_info["given_name"]
-    assert user.last_name == hhsams_user_info["family_name"]
-    assert user.hhs_id == hhsams_user_info["hhsid"]
+    assert user.oidc_id == UUID(sso_user_info["sub"])
+    assert user.email == sso_user_info["email"]
+    assert user.first_name == sso_user_info["given_name"]
+    assert user.last_name == sso_user_info["family_name"]
+    assert user.hhs_id == sso_user_info["hhsid"]
 
     # cleanup
     loaded_db.delete(user)

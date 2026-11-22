@@ -35,7 +35,7 @@ import AgreementsFilterTags from "./AgreementsFilterTags/AgreementsFilterTags";
 import AgreementTabs from "./AgreementsTabs";
 
 const AGREEMENTS_DEFINITION =
-    "An agreement is a general term to encompass the various types of work (contracts, grants, IAAs, etc.) happening at OPRE";
+    "An agreement is a general term to encompass the various types of work (contracts, grants, IAAs, etc.) happening at the institution";
 
 /**
  * @typedef {import('../../../types/AgreementTypes').Agreement} Agreement
@@ -166,7 +166,7 @@ const AgreementsList = () => {
 
     let subtitle = "All Agreements";
     let details =
-        "This is a list of all agreements across OPRE for the selected fiscal year. Draft budget lines are not included in the Totals.";
+        "This is a list of all agreements across the institution for the selected fiscal year. Draft budget lines are not included in the Totals.";
     if (myAgreementsUrl) {
         subtitle = "My Agreements";
         details =

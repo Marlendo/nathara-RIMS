@@ -102,7 +102,7 @@ export const RequestPreAwardApproval = () => {
     let uploadDisabledReason;
     if (!ENABLE_UPLOAD_CONSENSUS_MEMO) {
         uploadDisabledReason =
-            "Documents tab is coming soon! For now, please upload to the OPRE preferred tool to share documents";
+            "Documents tab is coming soon! For now, please upload to the preferred tool to share documents";
     } else if (!isStep4Completed) {
         uploadDisabledReason = "Please complete Step 4 (Evaluation) before uploading documents";
     } else if (hasApprovalBeenRequested) {

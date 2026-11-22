@@ -3,13 +3,15 @@ from flask_jwt_extended import jwt_required
 
 import ops_api.ops.auth.service as auth_service
 from ops_api.ops.auth import bp
+from ops_api.ops.auth.exceptions import AuthenticationError
 from ops_api.ops.auth.schema import (
-    LoginRequestSchema,
     LoginResponseSchema,
     LogoutResponseSchema,
     RefreshResponseSchema,
     RoleRequestSchema,
     RoleResponseSchema,
+    SsoCallbackRequestSchema,
+    SsoSessionResponseSchema,
     UserResponseSchema,
 )
 from ops_api.ops.utils.errors import error_simulator
@@ -19,13 +21,45 @@ from ops_api.ops.utils.response import make_response_with_headers
 @bp.route("/login/", methods=["POST"])
 @error_simulator
 def login_post() -> Response:
-    request_schema = LoginRequestSchema()
-    data = request_schema.dump(request_schema.load(request.json))
-    result = auth_service.login(**data)
+    """MIGRATION (PM RIMS 0001): login lama DIMATIKAN -> 410 + arahkan ke SSO."""
+    return make_response_with_headers(
+        {
+            "message": "Login lama dimatikan (PM RIMS 0001). Gunakan POST /auth/sso/callback.",
+            "error_type": "AUTHN_ERROR",
+        },
+        410,
+    )
+
+
+@bp.route("/sso/callback", methods=["POST"])
+@error_simulator
+def sso_callback_post() -> Response:
+    """Tukar JWT Supabase prod -> sesi aplikasi internal."""
+    try:
+        data = SsoCallbackRequestSchema().load(request.json or {})
+    except Exception as e:
+        return make_response_with_headers({"message": f"Payload SSO tidak valid: {e}"}, 400)
+    try:
+        result = auth_service.login_sso(data["supabase_jwt"])
+    except AuthenticationError as e:
+        msg = str(e)
+        denied = "ditolak" in msg or "Akses" in msg or "diaktifkan" in msg
+        status = 403 if denied else 401
+        error_type = "AUTHZ_ERROR" if denied else "AUTHN_ERROR"
+        return make_response_with_headers({"error_type": error_type, "message": msg}, status)
     response_schema = LoginResponseSchema()
-    data = response_schema.dump(result)
+    out = response_schema.dump(result)
     user_schema = UserResponseSchema()
-    data["user"] = user_schema.dump(result["user"])
+    out["user"] = user_schema.dump(result["user"])
+    return make_response_with_headers(out)
+
+
+@bp.route("/sso/session", methods=["GET"])
+@jwt_required()
+@error_simulator
+def sso_session_get() -> Response:
+    result = auth_service.sso_session_info()
+    data = SsoSessionResponseSchema().dump(result)
     return make_response_with_headers(data)
 
 

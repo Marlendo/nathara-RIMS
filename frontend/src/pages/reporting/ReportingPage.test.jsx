@@ -73,7 +73,7 @@ describe("ReportingPage", () => {
 
     it("should render the page heading", () => {
         renderWithProviders(<ReportingPage />);
-        expect(screen.getByText("OPRE Budget Reporting")).toBeInTheDocument();
+        expect(screen.getByText("Nathara RIMS Budget Reporting")).toBeInTheDocument();
     });
 
     it("should render the subtitle", () => {
@@ -89,13 +89,13 @@ describe("ReportingPage", () => {
     it("should render the description text", () => {
         renderWithProviders(<ReportingPage />);
         expect(
-            screen.getByText("This is a summary of OPRE's budget for the selected FY and applied filters.")
+            screen.getByText("This is a summary of the institution's budget for the selected FY and applied filters.")
         ).toBeInTheDocument();
     });
 
     it("should render the BigBudgetCard with correct title", () => {
         renderWithProviders(<ReportingPage />);
-        expect(screen.getByText("FY 2026 Available OPRE Budget *")).toBeInTheDocument();
+        expect(screen.getByText("FY 2026 Available Budget *")).toBeInTheDocument();
     });
 
     it("should render the FiscalYear selector", () => {

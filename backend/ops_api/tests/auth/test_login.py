@@ -133,7 +133,19 @@ def test_login_with_no_active_session(client, loaded_db, mocker):
     user = loaded_db.execute(select(User).where(User.email == "user.demo@email.com")).scalars().one_or_none()
     m2.return_value = ("blah", "blah", user)
 
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
+    m_verify.return_value = {
+        "iss": "https://api.nathara.ac.id/auth/v1",
+        "aud": "authenticated",
+        "sub": "33333333-3333-3333-3333-333333333333",
+        "email": "user.demo@email.com",
+        "given_name": "User",
+        "family_name": "Demo",
+        "exp": 4102444800,
+        "role": "admin",
+        "scope": "RIMS",
+    }
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert res.status_code == 200
 
     stmt = select(UserSession).where(UserSession.user_id == user.id)
@@ -163,7 +175,19 @@ def test_login_with_active_session(client, db_with_active_user_session, mocker):
     )  # noqa
     m2.return_value = ("blah", "blah", user)
 
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
+    m_verify.return_value = {
+        "iss": "https://api.nathara.ac.id/auth/v1",
+        "aud": "authenticated",
+        "sub": "33333333-3333-3333-3333-333333333333",
+        "email": "user.demo@email.com",
+        "given_name": "User",
+        "family_name": "Demo",
+        "exp": 4102444800,
+        "role": "admin",
+        "scope": "RIMS",
+    }
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert res.status_code == 200
 
     stmt = select(UserSession).where(UserSession.user_id == user.id).order_by(UserSession.created_on.desc())
@@ -190,7 +214,19 @@ def test_login_with_inactive_session(client, db_with_inactive_user_session, mock
     )  # noqa
     m2.return_value = ("blah", "blah", user)
 
-    res = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
+    m_verify.return_value = {
+        "iss": "https://api.nathara.ac.id/auth/v1",
+        "aud": "authenticated",
+        "sub": "33333333-3333-3333-3333-333333333333",
+        "email": "user.demo@email.com",
+        "given_name": "User",
+        "family_name": "Demo",
+        "exp": 4102444800,
+        "role": "admin",
+        "scope": "RIMS",
+    }
+    res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert res.status_code == 200
 
     stmt = select(UserSession).where(UserSession.user_id == user.id).order_by(UserSession.created_on.desc())
@@ -208,40 +244,40 @@ def test_login_with_inactive_session(client, db_with_inactive_user_session, mock
 
 
 def test_login_raises_user_inactive_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
     m2.side_effect = UserInactiveError
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.USER_INACTIVE.name
     assert result.json["message"] == "The user is INACTIVE. Please contact the system administrator."
 
 
 def test_login_raises_user_locked_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
     m2.side_effect = UserLockedError
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.USER_LOCKED.name
     assert result.json["message"] == "The user is LOCKED. Please contact the system administrator."
 
 
 def test_login_raises_extra_check_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
     m2.side_effect = ExtraCheckError({})
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.AUTHN_ERROR.name
     assert result.json["message"] == "An unknown error occurred during login. Please contact the system administrator."
 
 
 def test_login_raises_private_key_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
     m2.side_effect = PrivateKeyError
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.PROVIDER_ERROR.name
     assert (
@@ -251,47 +287,59 @@ def test_login_raises_private_key_error(client, loaded_db, mocker):
 
 
 def test_login_raises_authentication_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
-    m2.side_effect = AuthenticationError
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
+    m2.side_effect = AuthenticationError("SSO token tidak valid.")
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.AUTHN_ERROR.name
-    assert result.json["message"] == "There was an error with authentication. Please contact the system administrator."
+    assert result.json["message"] == "SSO token tidak valid."
 
 
 def test_login_raises_invalid_user_session_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
     m2.side_effect = InvalidUserSessionError
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.AUTHN_ERROR.name
     assert result.json["message"] == "The user session is invalid or has expired. Please log in again."
 
 
 def test_login_raises_no_authorization_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
     m2.side_effect = NoAuthorizationError
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.AUTHN_ERROR.name
     assert result.json["message"] == "The request is not authorized. Please log in again."
 
 
 def test_login_raises_no_user_found_error(client, loaded_db, mocker):
-    m2 = mocker.patch("ops_api.ops.auth.service.login")
+    m2 = mocker.patch("ops_api.ops.auth.service.login_sso")
     m2.side_effect = NoUserFoundError
 
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 401
     assert result.json["error_type"] == LoginErrorTypes.USER_NOT_FOUND.name
     assert result.json["message"] == "No user found. Please contact the system administrator."
 
 
-def test_login_user_response_excludes_sessions(client, loaded_db):
-    result = client.post("/auth/login/", json={"provider": "fakeauth", "code": "basic_user"})
+def test_login_user_response_excludes_sessions(client, loaded_db, mocker):
+    m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
+    m_verify.return_value = {
+        "iss": "https://api.nathara.ac.id/auth/v1",
+        "aud": "authenticated",
+        "sub": "44444444-4444-4444-4444-444444444444",
+        "email": "user.demo@email.com",
+        "given_name": "User",
+        "family_name": "Demo",
+        "exp": 4102444800,
+        "role": "admin",
+        "scope": "RIMS",
+    }
+    result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
     assert result.status_code == 200
     assert "sessions" not in result.json["user"], "User response should not include 'sessions'"
     loaded_db.execute(text("DELETE FROM user_session"))

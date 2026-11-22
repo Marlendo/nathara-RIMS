@@ -515,7 +515,7 @@ const AwardRequestForm = ({
                         selectedFile={null}
                         label="Signed Award"
                         disabled={true}
-                        disabledTooltip="Documents tab is coming soon! For now, please upload to the OPRE preferred tool to share documents."
+                        disabledTooltip="Documents tab is coming soon! For now, please upload to the preferred tool to share documents."
                         buttonText="Upload File"
                     />
                 </div>

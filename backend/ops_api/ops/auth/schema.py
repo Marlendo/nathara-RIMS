@@ -4,18 +4,35 @@ from uuid import UUID
 from marshmallow import Schema, fields
 
 from models import UserStatus
-from ops_api.ops.auth.auth_types import ProviderTypes
 
 
 class LoginRequestSchema(Schema):
-    code: str = fields.String(required=True)
-    provider: ProviderTypes = fields.Enum(ProviderTypes, required=True)
+    """MIGRATION (PM RIMS 0001): skema login lama (provider/code) DIMATIKAN.
+
+    Dipertahankan agar import lama tidak pecah; endpoint /login/ kini
+    410. Login baru: SsoCallbackRequestSchema via POST /auth/sso/callback.
+    """
+
+    code: str = fields.String(required=False, load_default=None)
+    provider: str = fields.String(required=False, load_default=None)
+
+
+class SsoCallbackRequestSchema(Schema):
+    supabase_jwt: str = fields.String(required=True)
 
 
 class LoginResponseSchema(Schema):
     # user is also passed back in the response, but it is not defined here
     access_token: str = fields.String(required=True)
     refresh_token: str = fields.String(required=True)
+
+
+class SsoSessionResponseSchema(Schema):
+    user_id: int = fields.Integer(required=True)
+    email: str = fields.String(required=True)
+    status: str = fields.String(required=True)
+    supabase_sub = fields.String(required=True, allow_none=True)
+    roles = fields.List(fields.String(), required=True)
 
 
 class LogoutResponseSchema(Schema):
@@ -39,7 +56,8 @@ class RoleResponseSchema(Schema):
 
 class UserResponseSchema(Schema):
     id: int = fields.Integer(required=True)
-    oidc_id: UUID = fields.UUID(required=True)
+    oidc_id: UUID = fields.UUID(required=True, allow_none=True)
+    supabase_sub = fields.String(required=False, allow_none=True)
     status: UserStatus = fields.Enum(UserStatus, required=True)
     hhs_id: Optional[str] = fields.String(allow_none=True)
     email: str = fields.String(required=True)

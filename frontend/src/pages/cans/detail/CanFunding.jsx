@@ -297,7 +297,7 @@ const CanFunding = ({
                         className="margin-bottom-4"
                     >
                         <h2>{`Add FY ${fiscalYear} Funding Received YTD`}</h2>
-                        <p>{`Add funding received towards the Total FY ${fiscalYear} Budget or come back to add funding later. Funding Received means the money is in OPRE's hands and ready to spend against.`}</p>
+                        <p>{`Add funding received towards the Total FY ${fiscalYear} Budget or come back to add funding later. Funding Received means the money is in the institution's hands and ready to spend against.`}</p>
                         <div className="display-flex flex-justify margin-top-4">
                             <div
                                 className="border-right-1px border-base-light"

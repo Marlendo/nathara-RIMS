@@ -213,7 +213,7 @@ export const ReviewBudgetTeamRequisition = () => {
                             variant="download"
                             label="Final Consensus Memo"
                             disabled={true}
-                            disabledTooltip="Upload Documents is coming soon! For now, please review within the OPRE preferred tool to share documents"
+                            disabledTooltip="Upload Documents is coming soon! For now, please review within the preferred tool to share documents"
                             buttonText="Download File"
                         />
                     </div>

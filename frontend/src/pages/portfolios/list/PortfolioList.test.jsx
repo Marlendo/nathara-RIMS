@@ -161,7 +161,7 @@ describe("PortfolioList", () => {
         expect(screen.getByText("All Portfolios")).toBeInTheDocument();
         expect(
             screen.getByText(
-                "This is a list of all portfolios across OPRE with their budget and spending data for the selected fiscal year."
+                "This is a list of all portfolios across the institution with their budget and spending data for the selected fiscal year."
             )
         ).toBeInTheDocument();
     });

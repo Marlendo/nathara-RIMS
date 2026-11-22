@@ -127,7 +127,7 @@ const NavMenu = () => {
                                 end
                                 onKeyDown={closeMenuOnEscape("reporting", reportingButtonRef)}
                             >
-                                OPRE Budget Reporting
+                                Nathara RIMS Budget Reporting
                             </NavLink>
                         </li>
                         {hasProcurementAccess && (

@@ -271,7 +271,7 @@ const EditAgreementAndBudgetLines = () => {
                 // that can't change while its tracked change is in review (#3269).
                 extractBackendErrorMessage(error) ||
                 error?.message ||
-                "If you continue to experience this issue, please submit a Budget Support Request through ORBIT.";
+                "If you continue to experience this issue, please submit a Budget Support Request melalui kanal support LPPM (lppm.nathara.ac.id).";
             setAlert({
                 type: "error",
                 heading: "Error saving changes",

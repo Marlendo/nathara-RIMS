@@ -52,6 +52,11 @@ class User(BaseModel):
     oidc_id: Mapped[Optional[UUID]] = mapped_column(
         UUID(as_uuid=True), unique=True, index=True
     )
+    # PM RIMS 0001: link ke subjek SSO Supabase prod (aditif, nullable agar
+    # backfill bertahap; unique cegah duplikat).
+    supabase_sub: Mapped[Optional[str]] = mapped_column(
+        String, unique=True, index=True, nullable=True
+    )
     hhs_id: Mapped[Optional[str]]
     email: Mapped[str] = mapped_column(index=True, nullable=False)
     first_name: Mapped[Optional[str]] = mapped_column(nullable=True)

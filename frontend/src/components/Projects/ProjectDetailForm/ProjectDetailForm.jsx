@@ -118,7 +118,7 @@ const ProjectDetailForm = ({
             <TextArea
                 name="description"
                 label="Description"
-                hintMsg="Brief description for internal purposes, not for the OPRE website."
+                hintMsg="Brief description for internal purposes, not for the public website."
                 value={description}
                 onChange={(name, value) => {
                     setDescription(value);

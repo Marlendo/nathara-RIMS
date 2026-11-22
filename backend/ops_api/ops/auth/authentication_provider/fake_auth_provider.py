@@ -1,72 +1,23 @@
-from flask import Config
+"""MIGRATION (PM RIMS 0001): provider login dev tanpa kredensial DIMATIKAN.
+
+FakeAuth DILARANG tersisa/lolos ke staging. Stub fail-closed.
+"""
 
 from ops_api.ops.auth.authentication_provider.authentication_provider import (
     AuthenticationProvider,
 )
+from ops_api.ops.auth.exceptions import AuthenticationError
 
 
 class FakeAuthProvider(AuthenticationProvider):
-    def __init__(
-        self,
-        provider_name: str,
-        config: Config,
-    ) -> None:
-        self.provider_name = provider_name
-        self.config = config
-
-        self.fakeUsers = {
-            "system_owner": {
-                "given_name": "System",
-                "family_name": "Owner",
-                "email": "system.owner@email.com",
-                "sub": "00000000-0000-1111-a111-000000000018",
-            },
-            "budget_team": {
-                "given_name": "Budget",
-                "family_name": "Team",
-                "email": "budget.team@email.com",
-                "sub": "00000000-0000-1111-a111-000000000021",
-            },
-            "division_director": {
-                "given_name": "Dave",
-                "family_name": "Director",
-                "email": "dave.director@email.com",
-                "sub": "00000000-0000-1111-a111-000000000020",
-            },
-            "basic_user": {
-                "given_name": "User",
-                "family_name": "Demo",
-                "email": "user.demo@email.com",
-                "sub": "00000000-0000-1111-a111-000000000019",
-            },
-            "procurement_team": {
-                "given_name": "Procurement",
-                "family_name": "Team",
-                "email": "procurement.team@email.com",
-                "sub": "00000000-0000-1111-a111-000000000027",
-            },
-            "power_user": {
-                "given_name": "Admin",
-                "family_name": "Power User",
-                "email": "admin.power.user@email.com",
-                "sub": "00000000-0000-1111-a111-000000000028",
-            },
-            "read_only_user": {
-                "given_name": "Randy",
-                "family_name": "Read-Only",
-                "email": "randy.readonly@email.com",
-                "sub": "00000000-0000-1111-a111-000000000029",
-            },
-        }
+    def __init__(self, provider_name: str, config=None) -> None:
+        raise AuthenticationError("FakeAuth dimatikan (PM RIMS 0001). Dilarang di staging.")
 
     def authenticate(self, auth_code):
-        # This simply simulates authenticating to an OIDC provider, by returning the auth_code as the token
-        # This uses the auth_code to lookup the user details in the get_user_info method
-        # This is only for testing purposes
-        return {"access_token": auth_code}
+        raise AuthenticationError("FakeAuth dimatikan (PM RIMS 0001).")
 
     def get_user_info(self, token):
-        return self.fakeUsers[token]
+        raise AuthenticationError("FakeAuth dimatikan (PM RIMS 0001).")
 
     def validate_token(self, token):
-        return True
+        raise AuthenticationError("FakeAuth dimatikan (PM RIMS 0001).")

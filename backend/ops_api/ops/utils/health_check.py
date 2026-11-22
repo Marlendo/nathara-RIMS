@@ -7,8 +7,9 @@ from sqlalchemy import text
 
 
 async def check_auth_services() -> dict:
-    """check the health of the OAuth server with a GET of the
-    OAuth server_metadata_url
+    """MIGRATION (PM RIMS 0001): cek provider OAuth lama DIMATIKAN.
+
+    Diganti health-check read-only ke JWKS Supabase prod (publik).
     Returns:
         dict: with alarm_level>0 if there is a problem
     """
@@ -17,14 +18,15 @@ async def check_auth_services() -> dict:
     if not current_app.config.get("HEALTH_CHECK_AUTH_SERVICES", True):
         return resp
     try:
-        authlib_client_config = current_app.config["AUTHLIB_OAUTH_CLIENTS"]["hhsams"]
-        server_metadata_url = authlib_client_config["server_metadata_url"]
-        r = requests.get(server_metadata_url, timeout=10)
+        jwks_url = current_app.config.get(
+            "SUPABASE_JWKS_URL", "https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
+        )
+        r = requests.get(jwks_url, headers={"Accept": "application/json"}, timeout=10)
         resp["status_code"] = r.status_code
         if r.status_code != 200:
             resp["alarm_level"] = 1
     except Exception as e:
-        logging.error("Auth Services check failed: " + str(e), exc_info=True)
+        logging.error("SSO JWKS check failed: " + str(e), exc_info=True)
         resp["alarm_level"] = 2
     return resp
 

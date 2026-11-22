@@ -1,12 +1,10 @@
-# OPRE OPS
+# Nathara RIMS
 
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
-This is the OPRE Portfolio Management System, or OPS. The finished product will replace OPRE's prior system,
-MAPS. The purpose of OPS can be found on
-[the wiki](https://github.com/HHS/OPRE-OPS/wiki).
+This is **Nathara RIMS** (Research & Innovation Management System, `lppm.nathara.ac.id`), forked from OPRE-OPS. Auth bawaan (OAuth logingov/hhsams/fakeauth + JWT keypair) DIMATIKAN (PM RIMS 0001); login via SSO Supabase prod.
 
 ## Dependencies
 
@@ -19,28 +17,15 @@ If you want to do development, you will also need to install [Python](https://ww
 
 The backend uses RSA keys to sign and verify JWTs. You can generate these keys by running the following commands...
 
-```shell
-mkdir ~/ops-keys
-openssl genrsa -out ~/ops-keys/keypair.pem 2048
-openssl rsa -in ~/ops-keys/keypair.pem -pubout -out ~/ops-keys/public.pem
-openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ~/ops-keys/keypair.pem -out ~/ops-keys/private.pem
-```
-
-Then place the private/public keys in your shell environment...
+MIGRATION (PM RIMS 0001): keypair JWT lama (openssl/RSA di atas) DIMATIKAN dan tidak lagi dipakai.
+SSO Supabase prod hanya butuh nilai publik (tanpa secret di repo/log):
 
 ```shell
-export JWT_PRIVATE_KEY=$(cat ~/ops-keys/private.pem)
-export JWT_PUBLIC_KEY=$(cat ~/ops-keys/public.pem)
+export SUPABASE_JWKS_URL="https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
+export SUPABASE_ANON_KEY="<anon-key-publik-dari-VPS-file>"
 ```
 
-Also, replace the public key file contents in the following locations...
-
-```
-cat ~/ops-keys/public.pem > ./public.pub
-cat ~/ops-keys/public.pem > ./backend/ops_api/ops/static/public.pem
-```
-
-N.B. The public key files above are deprecated and will be replaced with the `JWT_PUBLIC_KEY` environment variable in the future.
+`service_role` + keypair lama HARAM ada di env/file/log.
 
 ## Install
 
@@ -322,7 +307,7 @@ bun run lint --fix
 
 ### Pre-commit Hooks
 
-We use [pre-commit](https://pre-commit.com/index.html) hooks to help keep our code clean. If you develop for OPS, you must install them.
+We use [pre-commit](https://pre-commit.com/index.html) hooks to help keep our code clean. If you develop for Nathara RIMS, you must install them.
 
 ```shell
 pre-commit install
@@ -351,7 +336,7 @@ and [stg_fe_build_and_deploy.yml](.github/workflows/stg_fe_build_and_deploy.yml)
 
 ### Production Environment
 
-Our production environment is hosted in Azure and is deployed manually by the OPS team.
+Our production environment is hosted in Azure and is deployed by the RIMS team (see plan/ for DevOps handoff).
 The deployment is done using the [prod_be_build_and_deploy.yml](.github/workflows/prod_be_build_and_deploy.yml)
 and [prod_fe_build_and_deploy.yml](.github/workflows/prod_fe_build_and_deploy.yml) GitHub Actions workflows.
 

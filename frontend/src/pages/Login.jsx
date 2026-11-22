@@ -7,6 +7,9 @@ import { setLoginError } from "../components/Auth/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import authConstants from "../components/Auth/Auth.constants.js";
 
+// TODO-REBRAND: ganti opre-logo.svg dengan aset logo Nathara RIMS final
+// dari human/PM (file placeholder dipakai agar build tidak pecah).
+
 function Login() {
     const dispatch = useDispatch();
     const loginError = useSelector((state) => state.auth?.loginError);
@@ -47,13 +50,13 @@ function Login() {
                             <Link
                                 to="/"
                                 style={styles.textLogo}
-                                title="Portfolio Management System"
+                                title="Nathara RIMS"
                             >
                                 <img
                                     src={logo}
-                                    alt="OPRE Logo"
+                                    alt="Nathara RIMS Logo"
                                 />
-                                <span className="font-sans-sm text-bold">&nbsp;Portfolio Management System</span>
+                                <span className="font-sans-sm text-bold">&nbsp;Nathara RIMS</span>
                             </Link>
                         </div>
                     </div>
@@ -91,57 +94,47 @@ function Login() {
                             <MultiAuthSection />
                         </div>
                         <div className="grid-col-6 padding-x-205">
-                            <h2>Access to OPS requires proper authentication.</h2>
+                            <h2>Access to Nathara RIMS requires SSO authentication.</h2>
                             <div className="border-top border-base-lighter margin-top-3 padding-top-1">
-                                <h2>Are you a federal employee?</h2>
+                                <h2>Siapa yang bisa masuk?</h2>
                                 <div className="usa-prose">
                                     <p>
-                                        If you are a federal employee or contractor with an HHS email, please use HHS
-                                        AMS login.
+                                        Masuk menggunakan akun SSO Nathara Anda. Akses penuh (admin)
+                                        hanya untuk akun dengan role admin dan scope RIMS; akun lain
+                                        akan ditolak dengan pesan yang jelas.
                                     </p>
-                                    {!import.meta.env.PROD && (
-                                        <p>
-                                            If you are part of the development team, or want to access the system in a
-                                            lower environment for testing purposes only, please use the FakeAuth® login.
-                                        </p>
-                                    )}
+                                    <p>
+                                        Akun baru berstatus nonaktif dan perlu diaktifkan oleh admin.
+                                        Butuh bantuan? Hubungi kanal support LPPM.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div className="font-12px line-height-body-2">
                         <p className="line-height-body-2">
-                            This warning banner provides privacy and security notices consistent with applicable federal
-                            laws, directives, and other federal guidance for accessing this Government system, which
-                            includes (1) this computer network, (2) all computers connected to this network, and (3) all
-                            devices and storage media attached to this network or to a computer on this network.
+                            Sistem ini dikelola oleh LPPM — lppm.nathara.ac.id. Gunakan sesuai
+                            kewenangan Anda. Aktivitas masuk tercatat untuk audit keamanan.
                         </p>
                         <p className="line-height-body-2">
-                            This system is provided for Government-authorized use only.
+                            This system is provided for authorized use only.
                         </p>
                         <p className="line-height-body-2">
-                            Unauthorized or improper use of this system is prohibited and may result in disciplinary
-                            action and/or civil and criminal penalties.
-                        </p>
-                        <p className="line-height-body-2">
-                            Personal use of social media and networking sites on this system is limited as to not
-                            interfere with official work duties and is subject to monitoring.
+                            Unauthorized or improper use of this system is prohibited and may result in
+                            disciplinary action and/or civil and criminal penalties.
                         </p>
                         <p className="line-height-body-2">
                             By using this system, you understand and consent to the following:
                         </p>
                         <ul>
                             <li>
-                                The Government may monitor, record, and audit your system usage, including usage of
-                                personal devices and email systems for official duties or to conduct HHS business.
-                                Therefore, you have no reasonable expectation of privacy regarding any communication or
-                                data transiting or stored on this system. At any time, and for any lawful Government
-                                purpose, the government may monitor, intercept, and search and seize any communication
-                                or data transiting or stored on this system.
+                                The administrator may monitor, record, and audit your system usage.
+                                Therefore, you have no reasonable expectation of privacy regarding any
+                                communication or data transiting or stored on this system.
                             </li>
                             <li>
-                                Any communication or data transiting or stored on this system may be disclosed or used
-                                for any lawful Government purpose.
+                                Any communication or data transiting or stored on this system may be
+                                disclosed or used for any lawful purpose.
                             </li>
                         </ul>
                     </div>

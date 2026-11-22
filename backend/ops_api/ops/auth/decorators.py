@@ -3,26 +3,22 @@ from functools import wraps
 from typing import Callable, Optional
 
 from flask import Response, current_app, request
-from flask_jwt_extended import current_user, jwt_required
+from flask_jwt_extended import current_user, get_jwt_identity, jwt_required
 from loguru import logger
 
-from models import User, UserStatus
+from models import User
 from ops_api.ops.auth.auth_types import Permission, PermissionType
 from ops_api.ops.auth.authorization_providers import _check_role
 from ops_api.ops.auth.exceptions import (
     AuthenticationError,
     ExtraCheckError,
     InvalidUserSessionError,
-    NoUserFoundError,
-    UserInactiveError,
-    UserLockedError,
 )
 from ops_api.ops.auth.utils import (
     deactivate_all_user_sessions,
     get_all_active_user_sessions,
     get_bearer_token,
     get_latest_user_session,
-    get_user_from_userinfo,
     idle_logout,
 )
 from ops_api.ops.utils.errors import error_simulator
@@ -31,37 +27,50 @@ from ops_api.ops.utils.response import make_response_with_headers
 
 def is_user_active(f):
     """
-    Decorator to check if the user is active.
+    Decorator SSO (PM RIMS 0001): request WAJIB membawa sesi aplikasi
+    internal yang aktif (dibuat via /auth/sso/callback). Keamanan di
+    backend; guard FE hanya UX.
     """
 
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = f(*args, **kwargs)
+        from ops_api.ops.auth.exceptions import (
+            AuthenticationError,
+            InvalidUserSessionError,
+        )
+        from ops_api.ops.auth.utils import get_latest_user_session
 
-        from ops_api.ops.auth.authentication_gateway import AuthenticationGateway
-
-        auth_gateway = AuthenticationGateway(current_app.config)
-
-        provider = request.json.get("provider")
-        user_info = auth_gateway.get_user_info(provider, token.get("access_token"))
-        if not user_info:
-            raise AuthenticationError(f"Unable to get user_info for token={token}")
-
-        user = get_user_from_userinfo(user_info, current_app.db_session)
-
+        identity = get_jwt_identity()
+        if not identity:
+            raise AuthenticationError("Sesi SSO tidak ada. Silakan login ulang.")
+        user = current_user
         if not user:
-            raise NoUserFoundError(f"Unable to get user from user_info for token={token}")
+            raise AuthenticationError("User sesi SSO tidak ditemukan.")
+        latest = get_latest_user_session(user.id, current_app.db_session)
+        if not latest or not latest.is_active:
+            raise InvalidUserSessionError("Sesi tidak aktif. Silakan login ulang.")
+        return f(*args, **kwargs)
 
-        if not user.status:
-            raise AuthenticationError(f"User with token={token} has no status")
+    return decorated
 
-        if user.status == UserStatus.LOCKED:
-            raise UserLockedError(f"User with token={token} is locked")
 
-        if user.status == UserStatus.INACTIVE:
-            raise UserInactiveError(f"User with token={token} is inactive")
+def require_rims_access(f):
+    """Guard kanonis SSO: role == 'admin' AND scope == 'RIMS' (exact).
 
-        return token
+    Dibaca dari klaim JWT internal sesi app (diset saat login_sso dari
+    klaim Supabase prod terverifikasi). Default deny 403 jelas.
+    """
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        from flask_jwt_extended import get_jwt
+
+        claims = get_jwt()
+        if not (claims.get("sso_role") == "admin" and claims.get("sso_scope") == "RIMS"):
+            return make_response_with_headers(
+                {"message": "Akses ditolak: butuh role admin + scope RIMS. Hubungi admin."}, 403
+            )
+        return f(*args, **kwargs)
 
     return decorated
 

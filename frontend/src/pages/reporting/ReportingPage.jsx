@@ -38,9 +38,9 @@ const ReportingPage = () => {
     }, [isError, navigate]);
 
     return (
-        <App breadCrumbName="OPRE Budget Reporting">
+        <App breadCrumbName="Nathara RIMS Budget Reporting">
             <div className="display-flex flex-justify flex-align-center">
-                <h1 className="margin-0 margin-top-205 text-brand-primary font-sans-2xl">OPRE Budget Reporting</h1>
+                <h1 className="margin-0 margin-top-205 text-brand-primary font-sans-2xl">Nathara RIMS Budget Reporting</h1>
                 <FiscalYear
                     fiscalYear={selectedFiscalYear}
                     handleChangeFiscalYear={setSelectedFiscalYear}
@@ -57,7 +57,7 @@ const ReportingPage = () => {
                 />
             </div>
             <p className="margin-top-0 margin-bottom-4">
-                This is a summary of OPRE&apos;s budget for the selected FY and applied filters.
+                This is a summary of the institution&apos;s budget for the selected FY and applied filters.
             </p>
             {filters.portfolios.length > 0 && (
                 <ReportingFilterTags
@@ -70,7 +70,7 @@ const ReportingPage = () => {
             ) : (
                 <>
                     <BigBudgetCard
-                        title={`FY ${fiscalYear} Available OPRE Budget *`}
+                        title={`FY ${fiscalYear} Available Budget *`}
                         totalSpending={totalSpending}
                         totalFunding={totalFunding}
                     />
@@ -84,7 +84,7 @@ const ReportingPage = () => {
             )}
             <h2 className="margin-bottom-1 margin-top-8">Spending Summary</h2>
             <p className="margin-top-205">
-                This is a summary of OPRE&apos;s spending for the selected FY and applied filters.
+                This is a summary of the institution&apos;s spending for the selected FY and applied filters.
             </p>
             {!isLoading && (
                 <>

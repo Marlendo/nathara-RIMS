@@ -166,7 +166,7 @@ const ProjectsList = () => {
                     title="Projects"
                     titleTooltip={PROJECTS_DEFINITION}
                     subtitle="All Projects"
-                    details="This is a list of all projects across OPRE for the selected fiscal year. Draft budget lines are not included in the Totals."
+                    details="This is a list of all projects across the institution for the selected fiscal year. Draft budget lines are not included in the Totals."
                     TabsSection={
                         <div className="margin-left-auto">
                             <FiscalYear
@@ -193,7 +193,7 @@ const ProjectsList = () => {
                 title="Projects"
                 titleTooltip={PROJECTS_DEFINITION}
                 subtitle="All Projects"
-                details="This is a list of all projects across OPRE for the selected fiscal year. Draft budget lines are not included in the Totals."
+                details="This is a list of all projects across the institution for the selected fiscal year. Draft budget lines are not included in the Totals."
                 FilterTags={
                     <ProjectFilterTags
                         filters={filters}

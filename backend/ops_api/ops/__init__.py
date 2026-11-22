@@ -276,6 +276,7 @@ def before_request_function(app: Flask, request: request):
         if rule.endpoint
         not in [
             "auth.login_post",
+            "auth.sso_callback_post",
             "auth.logout_post",
             "auth.refresh_post",
             "home.show",

@@ -1,6 +1,6 @@
 # Authentication Implementation
 
-This document outlines the authentication implementation in the OPRE-OPS frontend application.
+This document outlines the authentication implementation in the Nathara RIMS frontend application (PM RIMS 0001: SSO Supabase prod only; OAuth lama + JWT keypair DIMATIKAN).
 
 ## Core Concepts
 
@@ -22,21 +22,21 @@ JWT tokens are stored in localStorage and managed through Redux. Token refresh l
 
 ### Security Considerations
 
-- We use state tokens to prevent CSRF attacks during the OAuth flow
+- The IdP login flow is handled by SSO Nathara (Supabase Auth prod); the backend validates RS256 via JWKS + cache and enforces guard role == 'admin' AND scope == 'RIMS'
 - We validate tokens before using them
 - We use the `replace` option in `Navigate` to avoid polluting browser history with redirects
 - We implement proper error handling for authentication failures
 
 ## Key Components
 
-### MultiAuthSection
+### MultiAuthSection (SSO Nathara)
 
 Handles the login process, including:
 
-- OAuth flow with multiple providers
+- Single SSO button ("Masuk dengan SSO Nathara") -> IdP -> backend POST /auth/sso/callback exchanges the Supabase JWT for an app session
 - Token storage and validation
 - Redirect after successful login
-- Error handling
+- Error handling (non-admin/scope users get a clear 403 + contact-admin message)
 
 ### ProtectedRoute
 
@@ -50,10 +50,10 @@ Protects routes that require authentication:
 
 Provides a clean interface for authentication-related API calls:
 
-- Login
-- Logout
+- SSO callback exchange (ssoCallback) + session info (ssoSession)
+- Logout (deactivates the app session; IdP refresh = login ulang)
 - Token refresh
-- User profile retrieval
+- Legacy /login/ (provider/code) is deprecated -> 410
 
 ## Testing
 

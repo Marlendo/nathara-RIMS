@@ -17,7 +17,7 @@ const Feedback = () => (
                     target="_blank"
                     rel="noopener noreferrer"
                 >
-                    ORBIT
+                    kanal support LPPM
                 </a>{" "}
                 and we’ll get back to you as soon as possible.
             </p>

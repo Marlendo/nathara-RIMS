@@ -16,10 +16,16 @@ SQLALCHEMY_POOL_PRE_PING = True  # Test connections before use
 
 FLASK_PORT = 8080
 
-JWT_PRIVATE_KEY = os.getenv("JWT_PRIVATE_KEY")
-JWT_PUBLIC_KEY = os.getenv("JWT_PUBLIC_KEY")
-JWT_ALGORITHM = "RS256"
-JWT_DECODE_ALGORITHMS = "RS256"
+# MIGRATION (PM RIMS 0001): keypair JWT lama DIMATIKAN. JANGAN isi nilai.
+# Verifikasi diganti JWKS Supabase prod (publik, read-only).
+JWT_PRIVATE_KEY = None  # DIMATIKAN (PM RIMS 0001)
+JWT_PUBLIC_KEY = None  # DIMATIKAN (PM RIMS 0001)
+# Sesi aplikasi internal memakai HS256 simetris dengan secret server-side
+# (BUKAN keypair lama, BUKAN service_role). WAJIB diisi via env di staging/prod;
+# nilai di bawah HANYA fallback dev/test lokal.
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-only-insecure-secret-ganti-di-staging")  # noqa: S105
+JWT_ALGORITHM = "HS256"
+JWT_DECODE_ALGORITHMS = "HS256"
 JWT_TOKEN_LOCATION = "headers"  # noqa: S105 "Not a secret"
 JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)  # FedRAMP AC-12 Control is 30 min
 JWT_REFRESH_TOKEN_EXPIRES = timedelta(hours=12)
@@ -31,35 +37,18 @@ JWT_ENCODE_AUDIENCE = "https://opre-ops-frontend-dev"
 # OPS-FRONTEND
 OPS_FRONTEND_URL = os.getenv("OPS_FRONTEND_URL", "http://localhost:3000")
 
-AUTHLIB_OAUTH_CLIENTS = {
-    "logingov": {
-        "server_metadata_url": "https://idp.int.identitysandbox.gov/.well-known/openid-configuration",
-        "token_endpoint": "https://idp.int.identitysandbox.gov/api/openid_connect/token",
-        "user_info_url": "https://idp.int.identitysandbox.gov/api/openid_connect/userinfo",
-        "client_id": "urn:gov:gsa:openidconnect.profiles:sp:sso:hhs_acf:opre_ops",
-        "client_kwargs": {"scope": "openid email"},
-        "aud": "https://idp.int.identitysandbox.gov/api/openid_connect/token",
-        "redirect_uri": "http://localhost:3000/login",
-    },
-    "hhsams": {
-        "server_metadata_url": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/.well-known/openid-configuration",
-        "token_endpoint": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/token",
-        "user_info_url": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/userinfo",
-        "client_id": "44fe2c7a-e9c5-43ec-87e9-3de78d2d3a11",
-        "client_kwargs": {"scope": "openid email"},
-        "aud": "https://sso-stage.acf.hhs.gov/auth/realms/ACF-SSO/protocol/openid-connect/token",
-        "redirect_uri": "http://localhost:3000/login",
-    },
-    "fakeauth": {
-        "server_metadata_url": "http://localhost:5000/oidc/.well-known/openid-configuration",
-        "token_endpoint": "http://localhost:5000/oidc/openid-connect/token",
-        "user_info_url": "http://localhost:5000/oidc/openid-connect/userinfo",
-        "client_id": "blah:blah",
-        "client_kwargs": {"scope": "openid email"},
-        "aud": "http://localhost:5000/oidc/openid-connect/token",
-        "redirect_uri": "http://localhost:3000/login",
-    },
-}
+# MIGRATION (PM RIMS 0001): AUTHLIB provider lama DIMATIKAN (dict kosong).
+# SSO Supabase prod via SUPABASE_* di bawah (hanya nilai publik).
+AUTHLIB_OAUTH_CLIENTS = {}
+
+# SSO Supabase PROD (hanya nilai publik; service_role + keypair lama HARAM).
+# TODO-SSOT: iss/aud/JWKS path BELUM final dari PM Production (placeholder SA-RIMS 0001).
+SUPABASE_JWKS_URL = os.getenv(
+    "SUPABASE_JWKS_URL", "https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
+)
+SUPABASE_ISS = os.getenv("SUPABASE_ISS", "https://api.nathara.ac.id/auth/v1")
+SUPABASE_AUD = os.getenv("SUPABASE_AUD", "authenticated")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")  # publishable/anon key (public)
 
 STORAGE_ACCOUNT_NAME = "timstoragetesting"
 STORAGE_ACCOUNT_KEY = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
@@ -69,15 +58,8 @@ JSONIFY_PRETTYPRINT_REGULAR = True
 # User Session Variables
 USER_SESSION_EXPIRATION = timedelta(minutes=28)  # See ADR 29
 
-FAKE_USER_OIDC_IDS = [
-    "00000000-0000-1111-a111-000000000018",
-    "00000000-0000-1111-a111-000000000019",
-    "00000000-0000-1111-a111-000000000020",
-    "00000000-0000-1111-a111-000000000021",
-    "00000000-0000-1111-a111-000000000022",
-    "00000000-0000-1111-a111-000000000027",
-    "00000000-0000-1111-a111-000000000028",
-]
+# MIGRATION (PM RIMS 0001): FakeAuth DIMATIKAN — daftar kosong.
+FAKE_USER_OIDC_IDS = []
 
 DOCUMENT_PROVIDERS = {
     "fake",

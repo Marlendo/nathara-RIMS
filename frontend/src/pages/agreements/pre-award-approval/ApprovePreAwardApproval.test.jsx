@@ -347,7 +347,7 @@ describe("ApprovePreAwardApproval", () => {
 
         expect(screen.getByTestId("accordion-review-final-consensus-memo")).toBeInTheDocument();
         expect(
-            screen.getByText(/Upload Documents is coming soon! For now, please review within the OPRE preferred tool/)
+            screen.getByText(/Upload Documents is coming soon! For now, please review within the preferred tool/)
         ).toBeInTheDocument();
         // FileUploadButton with download variant - aria-label is buttonText plus the label
         expect(screen.getByRole("button", { name: "Download File: Final Consensus Memo" })).toBeDisabled();

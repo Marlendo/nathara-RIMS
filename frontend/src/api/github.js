@@ -14,7 +14,7 @@ export const githubApi = createApi({
     }),
     endpoints: (builder) => ({
         getReleases: builder.query({
-            query: ({ owner = "HHS", repo = "OPRE-OPS", limit = 4 } = {}) =>
+            query: ({ owner = "Nathara", repo = "RIMS", limit = 4 } = {}) =>
                 `repos/${owner}/${repo}/releases?per_page=${limit}`,
             transformResponse: (response) => {
                 return response.map((release) => ({

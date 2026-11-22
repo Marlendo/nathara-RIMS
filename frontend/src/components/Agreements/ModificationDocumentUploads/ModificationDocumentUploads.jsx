@@ -4,7 +4,7 @@ import DisabledButtonWithTooltip from "../../UI/Button/DisabledButtonWithTooltip
 // Upload isn't available anywhere in OPS yet (the Documents tab is "coming soon"), so the
 // actions are shown disabled, matching the pre-award approval page.
 const UPLOAD_COMING_SOON =
-    "Documents tab is coming soon! For now, please upload to the OPRE preferred tool to share documents";
+    "Documents tab is coming soon! For now, please upload to the preferred tool to share documents";
 
 const DOCUMENT_CARDS = [
     { documentType: "CONTRACT_MODIFICATION_MEMO", label: "Contract Modification Memo" },

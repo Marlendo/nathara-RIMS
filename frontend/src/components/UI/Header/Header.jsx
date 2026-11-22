@@ -43,13 +43,13 @@ const Header = () => {
                     <Link
                         to="/"
                         style={styles.textLogo}
-                        title="Portfolio Management System"
+                        title="Nathara RIMS"
                     >
                         <img
                             src={logoIcon}
-                            alt="OPRE Logo"
+                            alt="Nathara RIMS Logo"
                         />
-                        <span className="font-sans-sm text-bold">&nbsp;Portfolio Management System</span>
+                        <span className="font-sans-sm text-bold">&nbsp;Nathara RIMS</span>
                     </Link>
                 </div>
             </div>

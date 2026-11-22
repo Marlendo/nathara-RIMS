@@ -1,17 +1,22 @@
-import cryptoRandomString from "crypto-random-string";
 import { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useLoginMutation } from "../../api/opsAuthAPI";
+import { useSsoCallbackMutation } from "../../api/opsAuthAPI";
 import ContainerModal from "../UI/Modals/ContainerModal";
-import { getAuthorizationCode, setActiveUser } from "./auth";
+import { setActiveUser } from "./auth";
 import { login, logout } from "./authSlice";
 import { PacmanLoader } from "react-spinners";
 import { safeRedirectPath } from "../../helpers/safeRedirect.helpers";
 
+// TODO-SSOT: URL Supabase Auth prod + flow callback BELUM final dari PM
+// Production. Placeholder: FE menukar JWT Supabase via backend
+// POST /auth/sso/callback. Secret TIDAK PERNAH di FE (hanya anon key publik).
+const SUPABASE_AUTH_URL = import.meta.env.VITE_SUPABASE_AUTH_URL || "";
+
 /**
- * Component that handles multiple authentication methods
- * @returns {React.ReactElement} The MultiAuthSection component
+ * SSO Nathara — satu-satunya jalur login (PM RIMS 0001).
+ * Login lama (3 provider OAuth bawaan) DIMATIKAN total.
+ * @returns {React.ReactElement} The SsoAuthSection component
  */
 const MultiAuthSection = () => {
     const dispatch = useDispatch();
@@ -20,57 +25,33 @@ const MultiAuthSection = () => {
     const [showModal, setShowModal] = useState(false);
     const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-    // Get the RTK Query login mutation hook
-    const [loginMutation] = useLoginMutation();
+    const [ssoCallback] = useSsoCallbackMutation();
 
-    /**
-     * Handles the authentication code callback from the provider
-     * @param {string} authCode - The authorization code from the provider
-     * @param {string|null} provider - The auth provider name (extracted from OAuth state), falls back to localStorage
-     */
-    const callBackend = useCallback(
-        async (authCode, provider = null) => {
+    const exchangeSupabaseJwt = useCallback(
+        async (supabaseJwt) => {
             setIsAuthenticating(true);
             try {
-                console.log(`Received Authentication Code = ${authCode}`);
-                const activeProvider = provider || localStorage.getItem("activeProvider");
-                if (!activeProvider) {
-                    console.error("API Login Failed! No Active Provider");
-                    navigate("/login");
-                    return;
-                }
-
-                // Use the RTK Query mutation instead of direct API call
-                const response = await loginMutation({
-                    provider: activeProvider,
-                    code: authCode
-                }).unwrap();
-
+                const response = await ssoCallback({ supabase_jwt: supabaseJwt }).unwrap();
                 const { access_token, refresh_token } = response;
 
                 if (!access_token) {
-                    console.error("API Login Failed!");
+                    console.error("SSO Nathara: tidak ada access_token dari backend.");
                     dispatch(logout());
                     navigate("/login");
                     return;
                 }
 
-                // Store tokens in localStorage
                 localStorage.setItem("access_token", access_token);
                 localStorage.setItem("refresh_token", refresh_token);
 
-                // Update Redux state
                 await dispatch(login());
                 await setActiveUser(access_token, dispatch);
 
-                // Navigate to the intended destination or home.
-                // location.state can be attacker-influenced (a crafted link can
-                // set from.pathname to "//evil.com" or "http://evil.com"), so
-                // we only honor same-origin in-app paths and fall back to "/".
                 const from = safeRedirectPath(location.state?.from?.pathname);
                 navigate(from, { replace: true });
             } catch (error) {
-                console.error("Error logging in:", error);
+                const status = error?.status;
+                console.error("SSO Nathara gagal:", status, error?.data?.message);
                 dispatch(logout());
                 setShowModal(false);
                 navigate("/login");
@@ -78,215 +59,57 @@ const MultiAuthSection = () => {
                 setIsAuthenticating(false);
             }
         },
-        [dispatch, navigate, loginMutation, location]
+        [dispatch, navigate, location, ssoCallback]
     );
 
+    // Kembalian dari IdP membawa supabase jwt via hash/query (?sso_jwt=...).
+    // TODO-SSOT: samakan dengan flow final PM Production (PKCE/code exchange).
     useEffect(() => {
-        // Check for authentication code in URL first - this should take priority
-        const queryParams = new URLSearchParams(window.location.search);
-        const localStateString = localStorage.getItem("ops-state-key");
-
-        // Process auth callback before doing any other auth checks
-        if (queryParams.has("state") && queryParams.has("code") && localStateString) {
-            const returnedState = queryParams.get("state");
-            const authCode = queryParams.get("code");
-
-            console.log(`Processing auth callback with code: ${authCode}`);
-            localStorage.removeItem("ops-state-key");
-
-            if (localStateString !== returnedState) {
-                console.error("State mismatch:", { localStateString, returnedState });
-                throw new Error("Response from OIDC provider is invalid.");
-            } else if (authCode) {
-                // Extract provider from the state parameter (format: "randomString|provider")
-                const pipeIndex = returnedState.lastIndexOf("|");
-                const provider = pipeIndex !== -1 ? returnedState.substring(pipeIndex + 1) : null;
-
-                // Handle the code immediately, no need to check tokens first
-                callBackend(authCode, provider).catch((error) => {
-                    console.error("Error in callBackend:", error);
-                    dispatch(logout());
-                    navigate("/login");
-                });
-
-                // Exit early - don't run the ensureActiveUser logic during auth callback
-                return;
-            }
+        const params = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const ssoJwt = params.get("sso_jwt") || hashParams.get("access_token");
+        if (ssoJwt) {
+            exchangeSupabaseJwt(ssoJwt);
         }
+    }, [exchangeSupabaseJwt]);
 
-        // Set state token if none exists
-        if (!localStateString && !queryParams.has("code")) {
-            localStorage.setItem("ops-state-key", cryptoRandomString({ length: 64 }));
+    const handleSsoLogin = () => {
+        // Bersihkan sisa sesi provider lama bila ada.
+        localStorage.removeItem("activeProvider");
+        localStorage.removeItem("ops-state-key");
+        if (SUPABASE_AUTH_URL) {
+            window.location.href = SUPABASE_AUTH_URL;
+            return;
         }
-    }, [callBackend, dispatch, navigate]);
-
-    /**
-     * Handles login with fake authentication (for development/testing)
-     * @param {string} userType - The type of user to authenticate as
-     */
-    const handleFakeAuthLogin = async (userType) => {
-        setIsAuthenticating(true);
-        try {
-            localStorage.setItem("activeProvider", "fakeauth");
-            await callBackend(userType);
-        } catch (error) {
-            console.error(error);
-            setIsAuthenticating(false);
-        }
+        // Tanpa URL IdP terkonfigurasi: arahkan ke halaman login SSO backend.
+        // TODO-SSOT: ganti dengan URL Supabase Auth prod final.
+        setShowModal(true);
     };
-
-    /**
-     * Handles login with SSO provider
-     * @param {string} provider - The SSO provider to use
-     */
-    const handleSSOLogin = (provider) => {
-        setIsAuthenticating(true);
-        localStorage.setItem("activeProvider", provider);
-        const stateKey = localStorage.getItem("ops-state-key");
-        if (stateKey) {
-            // Encode provider in the state so it survives the OAuth round-trip
-            // independent of localStorage (which can be cleared by a race with postRefresh/logout)
-            const stateWithProvider = `${stateKey}|${provider}`;
-            localStorage.setItem("ops-state-key", stateWithProvider);
-            const authUrl = getAuthorizationCode(provider, stateWithProvider);
-            window.location.href = authUrl.toString();
-        } else {
-            console.error("No state key found for SSO login");
-            setIsAuthenticating(false);
-        }
-    };
-
-    if (isAuthenticating) {
-        return (
-            <div className="bg-brand-base-light-variant padding-y-3 padding-x-5">
-                <h1>Signing In...</h1>
-                <PacmanLoader
-                    size={25}
-                    aria-label="Loading Spinner"
-                    data-testid="loader"
-                />
-            </div>
-        );
-    }
 
     return (
-        <>
-            <div className="bg-brand-base-light-variant padding-y-3 padding-x-5">
-                <h1 className="margin-bottom-1">Sign in to your account</h1>
-                <div className="usa-prose">
-                    <p className="margin-top-1">
-                        You can access your account by signing in with one of the options below.
-                    </p>
-                </div>
-                {import.meta.env.MODE === "development" && (
-                    <p>
-                        <button
-                            type="button"
-                            className="usa-button usa-button--outline width-full bg-white"
-                            onClick={() => handleSSOLogin("logingov")}
-                            disabled={isAuthenticating}
-                        >
-                            {isAuthenticating ? "Signing in..." : "Sign in with Login.gov"}
-                        </button>
-                    </p>
-                )}
+        <div>
+            {isAuthenticating ? (
+                <PacmanLoader color="#336A90" />
+            ) : (
+                <button
+                    type="button"
+                    className="usa-button"
+                    onClick={handleSsoLogin}
+                >
+                    Masuk dengan SSO Nathara
+                </button>
+            )}
+            <ContainerModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title="SSO Nathara belum dikonfigurasi"
+            >
                 <p>
-                    <button
-                        type="button"
-                        className="usa-button usa-button--outline width-full bg-white"
-                        onClick={() => handleSSOLogin("hhsams")}
-                        disabled={isAuthenticating}
-                    >
-                        {isAuthenticating ? "Signing in..." : "Sign in with HHS AMS"}
-                    </button>
+                    URL login SSO Supabase prod belum diisi (TODO-SSOT: VITE_SUPABASE_AUTH_URL). Hubungi
+                    admin.
                 </p>
-                {!import.meta.env.PROD && (
-                    <p>
-                        <button
-                            type="button"
-                            className="usa-button usa-button--outline width-full bg-white"
-                            onClick={() => setShowModal(true)}
-                            disabled={isAuthenticating}
-                        >
-                            {isAuthenticating ? "Signing in..." : "Sign in with FakeAuth®"}
-                        </button>
-                    </p>
-                )}
-                {showModal && (
-                    <ContainerModal
-                        heading="FakeAuth® User Selection"
-                        description="Please select the User role you would like to assume."
-                        setShowModal={setShowModal}
-                    >
-                        <div className="usa-prose">
-                            <p>
-                                <button
-                                    className="usa-button usa-button--outline width-full"
-                                    onClick={() => handleFakeAuthLogin("system_owner")}
-                                    disabled={isAuthenticating}
-                                >
-                                    System Owner
-                                </button>
-                            </p>
-                            <p>
-                                <button
-                                    className="usa-button usa-button--outline width-full"
-                                    onClick={() => handleFakeAuthLogin("budget_team")}
-                                    disabled={isAuthenticating}
-                                >
-                                    Budget Team Member
-                                </button>
-                            </p>
-                            <p>
-                                <button
-                                    className="usa-button usa-button--outline width-full"
-                                    onClick={() => handleFakeAuthLogin("procurement_team")}
-                                    disabled={isAuthenticating}
-                                >
-                                    Procurement Team Member
-                                </button>
-                            </p>
-                            <p>
-                                <button
-                                    className="usa-button usa-button--outline width-full"
-                                    onClick={() => handleFakeAuthLogin("division_director")}
-                                    disabled={isAuthenticating}
-                                >
-                                    Division Director
-                                </button>
-                            </p>
-                            <p>
-                                <button
-                                    className="usa-button usa-button--outline width-full"
-                                    onClick={() => handleFakeAuthLogin("basic_user")}
-                                    disabled={isAuthenticating}
-                                >
-                                    User Demo
-                                </button>
-                            </p>
-                            <p>
-                                <button
-                                    className="usa-button usa-button--outline width-full"
-                                    onClick={() => handleFakeAuthLogin("power_user")}
-                                    disabled={isAuthenticating}
-                                >
-                                    Administrative Power User
-                                </button>
-                            </p>
-                            <p>
-                                <button
-                                    className="usa-button usa-button--outline width-full"
-                                    onClick={() => handleFakeAuthLogin("read_only_user")}
-                                    disabled={isAuthenticating}
-                                >
-                                    Read Only User
-                                </button>
-                            </p>
-                        </div>
-                    </ContainerModal>
-                )}
-            </div>
-        </>
+            </ContainerModal>
+        </div>
     );
 };
 
