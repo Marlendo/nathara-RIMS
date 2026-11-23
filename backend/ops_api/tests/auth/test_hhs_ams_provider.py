@@ -48,9 +48,9 @@ def sso_setup():
     from flask import Flask
 
     app = Flask(__name__)
-    app.config["SUPABASE_JWKS_URL"] = "https://test.invalid/jwks.json"
-    app.config["SUPABASE_ISS"] = "https://test.invalid/auth/v1"
-    app.config["SUPABASE_AUD"] = "authenticated"
+    app.config["SUPABASE_JWKS_URL"] = "https://test.invalid/functions/v1/sso-jwks"
+    app.config["SUPABASE_ISS"] = "https://sso.test.invalid"
+    app.config["SUPABASE_AUD"] = "lppm"
     ctx = app.app_context()
     ctx.push()
     private_key, jwk = _make_keypair()
@@ -63,16 +63,18 @@ def sso_setup():
 
 
 def _claims(**over):
+    # SSOT Prod (PM RIMS 0002): iss=https://sso.nathara.ac.id, aud=lppm,
+    # klaim otorisasi top-level role + scopes. Di sini pakai host test.
     now = int(time.time())
     base = {
-        "iss": "https://test.invalid/auth/v1",
-        "aud": "authenticated",
+        "iss": "https://sso.test.invalid",
+        "aud": "lppm",
         "sub": str(uuid.uuid4()),
         "email": "admin.rims@example.com",
         "exp": now + 600,
         "iat": now,
         "role": "admin",
-        "scope": "RIMS",
+        "scopes": ["RIMS"],
     }
     base.update(over)
     return base
@@ -88,25 +90,68 @@ def test_verify_ok_and_guard_admin_rims(sso_setup):
 
 
 def test_guard_matrix_denies_non_admin_rims(sso_setup):
+    # Matriks 403 SSOT (PM RIMS 0002), 6 kasus: hanya admin+RIMS yang lolos.
     private_key, _ = sso_setup
     cases = [
-        ({"role": "user", "scope": "RIMS"}, False),
-        ({"role": "admin", "scope": "OTHER"}, False),
-        ({"role": "admin", "scope": None}, False),
-        ({"role": None, "scope": "RIMS"}, False),
-        ("__pop_role_scope__", False),
+        ({"role": "admin", "scopes": ["RIMS"]}, True),  # 1. admin + RIMS -> OK
+        ({"role": "user", "scopes": ["RIMS"]}, False),  # 2. non-admin + RIMS -> 403
+        ({"role": "admin", "scopes": ["OTHER"]}, False),  # 3. admin + scope lain -> 403
+        ({"role": "admin", "scopes": []}, False),  # 4. admin tanpa scope -> 403
+        ({"role": "authenticated", "scopes": ["RIMS"]}, False),  # 5. postgres-role lama -> 403
+        ("__pop_role_scopes__", False),  # 6. tanpa klaim SSOT -> 403
     ]
     for patch, expected in cases:
         claims = _claims()
-        if patch == "__pop_role_scope__":
+        if patch == "__pop_role_scopes__":
             claims.pop("role", None)
+            claims.pop("scopes", None)
             claims.pop("scope", None)
         else:
+            claims.pop("scope", None)
             claims.update(patch)
         token = _sign(private_key, claims)
         verified = sso.verify_supabase_jwt(token)
         identity = sso.extract_sso_identity(verified)
         assert sso.is_rims_admin(identity) is expected, patch
+
+
+def test_user_metadata_role_admin_is_denied(sso_setup):
+    # H-01 anti-privesc: user_metadata.role=admin TANPA klaim SSOT -> 403.
+    private_key, _ = sso_setup
+    claims = _claims()
+    claims.pop("role", None)
+    claims.pop("scopes", None)
+    claims.pop("scope", None)
+    claims["user_metadata"] = {"role": "admin", "scope": "RIMS"}
+    token = _sign(private_key, claims)
+    verified = sso.verify_supabase_jwt(token)
+    identity = sso.extract_sso_identity(verified)
+    assert sso.is_rims_admin(identity) is False
+
+
+def test_app_metadata_role_admin_is_denied(sso_setup):
+    # H-01: app_metadata BUKAN sumber otorisasi SSOT -> 403.
+    private_key, _ = sso_setup
+    claims = _claims()
+    claims.pop("role", None)
+    claims.pop("scopes", None)
+    claims.pop("scope", None)
+    claims["app_metadata"] = {"role": "admin", "scope": "RIMS"}
+    token = _sign(private_key, claims)
+    verified = sso.verify_supabase_jwt(token)
+    identity = sso.extract_sso_identity(verified)
+    assert sso.is_rims_admin(identity) is False
+
+
+def test_singular_scope_tolerated(sso_setup):
+    # Toleransi bentuk singular ekuivalen (TODO-SSOT-VERIFY): tetap hijau.
+    private_key, _ = sso_setup
+    claims = _claims()
+    claims.pop("scopes", None)
+    claims["scope"] = "RIMS"
+    token = _sign(private_key, claims)
+    identity = sso.extract_sso_identity(sso.verify_supabase_jwt(token))
+    assert sso.is_rims_admin(identity) is True
 
 
 def test_reject_wrong_iss(sso_setup):
@@ -126,6 +171,13 @@ def test_reject_wrong_aud(sso_setup):
 def test_reject_expired(sso_setup):
     private_key, _ = sso_setup
     token = _sign(private_key, _claims(exp=int(time.time()) - 3600))
+    with pytest.raises(AuthenticationError):
+        sso.verify_supabase_jwt(token)
+
+
+def test_reject_iat_far_future(sso_setup):
+    private_key, _ = sso_setup
+    token = _sign(private_key, _claims(iat=int(time.time()) + 3600))
     with pytest.raises(AuthenticationError):
         sso.verify_supabase_jwt(token)
 

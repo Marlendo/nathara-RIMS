@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useSsoCallbackMutation, useLogoutMutation } from "../../api/opsAuthAPI";
 import User from "../UI/Header/User";
 import NotificationCenter from "../UI/NotificationCenter/NotificationCenter";
-import { getAccessToken, setActiveUser } from "./auth";
+import { getAccessToken, setActiveUser, cleanSsoFromUrl } from "./auth";
 import { login, logout } from "./authSlice";
 
 /**
@@ -58,6 +58,8 @@ const AuthSection = () => {
         const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
         const ssoJwt = queryParams.get("sso_jwt") || hashParams.get("access_token");
         if (ssoJwt) {
+            // M-04: bersihkan JWT dari address bar SEBELUM tukar ke backend.
+            cleanSsoFromUrl();
             localStorage.removeItem("activeProvider");
             localStorage.removeItem("ops-state-key");
             callBackend(ssoJwt).catch((error) => {

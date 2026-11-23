@@ -6,8 +6,14 @@ Menggantikan AuthenticationGateway + provider OAuth lama yang dimatikan
 ``none``/HS256. ``iss``/``aud`` dicocokkan exact, toleransi clock skew
 +/-60 detik.
 
-TODO-SSOT: nilai default iss/aud/JWKS path/klaim role-scope-nama adalah
-placeholder dari analisa SA-RIMS 0001 dan BELUM final dari PM Production.
+TODO-SSOT-VERIFY: nilai default iss/aud/JWKS di bawah adalah SSOT Prod FINAL
+(PM RIMS 0002, diterima 2026-11-23): JWKS=https://api.nathara.ac.id/functions/v1/sso-jwks
+(kid=sso-prod-2026-11), iss=https://sso.nathara.ac.id, aud=lppm (exact).
+Klaim otorisasi TOP-LEVEL ``role`` + ``scopes`` (bukan app_metadata /
+user_metadata). user_metadata HANYA untuk nama tampilan, TIDAK PERNAH untuk
+otorisasi (H-01). Klaim top-level ``role`` postgres lama (``"authenticated"``)
+TIDAK DIBACA untuk otorisasi (H-02) — IdP SSOT menerbitkan peran aplikasi di
+top-level ``role`` + ``scopes``.
 JANGAN hardcode secret di sini; hanya JWKS URL publik + anon/publishable
 key (public). service_role + keypair lama HARAM.
 """
@@ -22,10 +28,11 @@ from loguru import logger
 
 from ops_api.ops.auth.exceptions import AuthenticationError
 
-# TODO-SSOT: konfirmasi path JWKS exact + iss/aud exact ke PM Production.
-DEFAULT_JWKS_URL = "https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
-DEFAULT_ISS = "https://api.nathara.ac.id/auth/v1"
-DEFAULT_AUD = "authenticated"
+# SSOT Prod FINAL (PM RIMS 0002). Boleh override via env
+# (SUPABASE_JWKS_URL/SUPABASE_ISS/SUPABASE_AUD) untuk staging/test.
+DEFAULT_JWKS_URL = "https://api.nathara.ac.id/functions/v1/sso-jwks"
+DEFAULT_ISS = "https://sso.nathara.ac.id"
+DEFAULT_AUD = "lppm"
 
 _JWKS_CACHE_TTL_SECONDS = 600  # 10 menit (usul SA-RIMS 0001)
 _CLOCK_SKEW_SECONDS = 60  # +/-60 detik untuk exp/nbf/iat
@@ -100,33 +107,52 @@ def verify_supabase_jwt(token: str) -> dict:
     nbf = claims.get("nbf")
     if nbf is not None and int(nbf) - _CLOCK_SKEW_SECONDS > now:
         raise AuthenticationError("Token SSO belum berlaku.")
+    # L-03: tolak token yang diterbitkan jauh di masa depan (pra-diterbitkan).
+    iat = claims.get("iat")
+    if iat is not None and int(iat) - _CLOCK_SKEW_SECONDS > now:
+        logger.warning("SSO: iat di masa depan")
+        raise AuthenticationError("Token SSO belum berlaku.")
     return dict(header_claims)
 
 
-def extract_sso_identity(claims: dict) -> dict:
-    """Petakan klaim prod -> identitas internal + guard admin/RIMS.
+def _as_scope_list(raw) -> list:
+    """Normalisasi klaim scopes SSOT ke list string.
 
-    TODO-SSOT: nama klaim role/scope/nama exact BELUM final dari PM
-    Production. Placeholder: coba beberapa lokasi umum
-    (app_metadata/user_metadata/top-level), guard kanonis tetap
-    ``role == 'admin' AND scope == 'RIMS'`` (exact, default deny 403).
+    SSOT: ``scopes`` top-level (list, mis. ["RIMS"]). Toleransi bentuk
+    ekuivalen: string tunggal di ``scopes``/``scope`` (TODO-SSOT-VERIFY —
+    verifikasi bentuk final saat token prod asli tersedia).
     """
-    app_meta = claims.get("app_metadata") or {}
-    user_meta = claims.get("user_metadata") or {}
-    role = (
-        claims.get("role")
-        or app_meta.get("role")
-        or user_meta.get("role")
-        or claims.get("app_role")
-    )
-    scope = (
-        claims.get("scope")
-        or app_meta.get("scope")
-        or user_meta.get("scope")
-        or claims.get("app_scope")
-    )
+    if raw is None:
+        return []
+    if isinstance(raw, (list, tuple)):
+        return [str(s) for s in raw]
+    if isinstance(raw, str):
+        return [raw]
+    return []
+
+
+def extract_sso_identity(claims: dict) -> dict:
+    """Petakan klaim SSOT prod -> identitas internal + guard admin/RIMS.
+
+    SSOT Prod (PM RIMS 0002): otorisasi dibaca HANYA dari klaim TOP-LEVEL
+    ``role`` + ``scopes`` (exact). ``app_metadata``/``user_metadata``/klaim
+    top-level generik lain TIDAK dibaca untuk role/scope (H-01/H-02) —
+    ``user_metadata`` hanya dipakai untuk nama tampilan (display name),
+    TIDAK PERNAH untuk keputusan otorisasi. Guard kanonis tetap
+    ``role == 'admin' AND 'RIMS' in scopes`` (exact, default deny 403).
+    """
+
+    role = claims.get("role")
+    raw_scopes = claims.get("scopes")
+    if raw_scopes is None:
+        # Toleransi bentuk singular ekuivalen (TODO-SSOT-VERIFY).
+        raw_scopes = claims.get("scope")
+    scopes = _as_scope_list(raw_scopes)
+    scope = scopes[0] if scopes else None
     sub = claims.get("sub")
-    email = claims.get("email") or user_meta.get("email")
+    email = claims.get("email")
+    # Nama tampilan: klaim top-level dulu, lalu user_metadata (display-only).
+    user_meta = claims.get("user_metadata") or {}
     given = claims.get("given_name") or user_meta.get("given_name") or user_meta.get("full_name")
     family = claims.get("family_name") or user_meta.get("family_name")
     if given and family:
@@ -147,9 +173,16 @@ def extract_sso_identity(claims: dict) -> dict:
         "family_name": family,
         "role": role,
         "scope": scope,
+        "scopes": scopes,
     }
 
 
 def is_rims_admin(identity: dict) -> bool:
-    """Guard kanonis: role == 'admin' AND scope == 'RIMS' (exact)."""
-    return identity.get("role") == "admin" and identity.get("scope") == "RIMS"
+    """Guard kanonis SSOT: role == 'admin' AND 'RIMS' in scopes (exact)."""
+    if identity.get("role") != "admin":
+        return False
+    scopes = identity.get("scopes")
+    if scopes is None:
+        single = identity.get("scope")
+        scopes = [single] if single else []
+    return "RIMS" in [str(s) for s in scopes]

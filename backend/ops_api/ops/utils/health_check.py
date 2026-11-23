@@ -1,15 +1,18 @@
 import asyncio
 import logging
 
-import requests
 from flask import current_app
 from sqlalchemy import text
+
+from ops_api.ops.auth.supabase_sso_provider import get_supabase_jwks
 
 
 async def check_auth_services() -> dict:
     """MIGRATION (PM RIMS 0001): cek provider OAuth lama DIMATIKAN.
 
     Diganti health-check read-only ke JWKS Supabase prod (publik).
+    M-01 (PM RIMS 0002): pakai get_supabase_jwks() yang sudah cache TTL
+    10 menit + fallback cache basi — TIDAK fetch langsung tiap poll.
     Returns:
         dict: with alarm_level>0 if there is a problem
     """
@@ -18,12 +21,11 @@ async def check_auth_services() -> dict:
     if not current_app.config.get("HEALTH_CHECK_AUTH_SERVICES", True):
         return resp
     try:
-        jwks_url = current_app.config.get(
-            "SUPABASE_JWKS_URL", "https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
-        )
-        r = requests.get(jwks_url, headers={"Accept": "application/json"}, timeout=10)
-        resp["status_code"] = r.status_code
-        if r.status_code != 200:
+        jwks = get_supabase_jwks()
+        keys = jwks.get("keys", [])
+        resp["status_code"] = 200 if keys else 503
+        # JWKS kosong (IdP belum terbit key) = fail-closed, alarm agar terpantau.
+        if not keys:
             resp["alarm_level"] = 1
     except Exception as e:
         logging.error("SSO JWKS check failed: " + str(e), exc_info=True)

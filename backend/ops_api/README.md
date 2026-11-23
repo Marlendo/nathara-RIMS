@@ -30,7 +30,11 @@ openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in ~/ops-keys/keypair.pe
 
 # MIGRATION (PM RIMS 0001): JWT_PRIVATE_KEY/JWT_PUBLIC_KEY lama DIMATIKAN.
 # SSO Supabase prod hanya butuh SUPABASE_JWKS_URL + SUPABASE_ANON_KEY (publik).
-export SUPABASE_JWKS_URL="https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
+# SSOT Prod FINAL (PM RIMS 0002): JWKS functions/v1/sso-jwks (kid=sso-prod-2026-11),
+# iss=https://sso.nathara.ac.id, aud=lppm; klaim otorisasi top-level role+scopes.
+export SUPABASE_JWKS_URL="https://api.nathara.ac.id/functions/v1/sso-jwks"
+export SUPABASE_ISS="https://sso.nathara.ac.id"
+export SUPABASE_AUD="lppm"
 export SUPABASE_ANON_KEY="<anon-key-publik-dari-VPS-file>"
 
 cat ~/ops-keys/public.pem > ../../public.pub

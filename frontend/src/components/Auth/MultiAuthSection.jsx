@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSsoCallbackMutation } from "../../api/opsAuthAPI";
 import ContainerModal from "../UI/Modals/ContainerModal";
-import { setActiveUser } from "./auth";
+import { setActiveUser, cleanSsoFromUrl } from "./auth";
 import { login, logout } from "./authSlice";
 import { PacmanLoader } from "react-spinners";
 import { safeRedirectPath } from "../../helpers/safeRedirect.helpers";
@@ -69,6 +69,8 @@ const MultiAuthSection = () => {
         const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
         const ssoJwt = params.get("sso_jwt") || hashParams.get("access_token");
         if (ssoJwt) {
+            // M-04: bersihkan JWT dari address bar SEBELUM tukar ke backend.
+            cleanSsoFromUrl();
             exchangeSupabaseJwt(ssoJwt);
         }
     }, [exchangeSupabaseJwt]);

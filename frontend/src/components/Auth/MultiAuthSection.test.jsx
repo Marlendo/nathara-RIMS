@@ -5,6 +5,7 @@ const mockSetActiveUser = vi.fn();
 // Mock the auth.js file
 vi.mock("./auth", () => ({
     setActiveUser: (...args) => mockSetActiveUser(...args),
+    cleanSsoFromUrl: vi.fn(),
     logoutUser: vi.fn(() => Promise.resolve(null)),
     CheckAuth: vi.fn(() => true),
     getAccessToken: vi.fn(() => "mock-access-token"),
@@ -99,6 +100,7 @@ describe("MultiAuthSection (SSO Nathara)", () => {
 
         window.history.pushState({}, "", "/login/callback?sso_jwt=SUPABASE_JWT_123");
 
+        const authMock = await import("./auth");
         renderWithProviders(<MultiAuthSection />);
 
         await waitFor(() => {
@@ -107,5 +109,7 @@ describe("MultiAuthSection (SSO Nathara)", () => {
         await waitFor(() => {
             expect(storage.get("access_token")).toBe("test-access-token");
         });
+        // M-04: JWT dibersihkan dari address bar sebelum ditukar ke backend.
+        expect(authMock.cleanSsoFromUrl).toHaveBeenCalled();
     });
 });

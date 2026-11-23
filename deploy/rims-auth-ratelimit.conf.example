@@ -1,0 +1,29 @@
+# Edge rate-limit untuk /auth/* (M-03, PM RIMS 0002).
+#
+# Backend RIMS TIDAK memakai Flask-Limiter (tanpa dep baru, zero-diff).
+# Terapkan snippet ini di proxy edge (nginx sidecar / cloudflared ingress /
+# Cloudflare WAF) di depan backend :8091 agar endpoint unauthenticated
+# POST /auth/sso/callback tidak bisa dihantam brute-force token forgery.
+#
+# Contoh nginx (sesuaikan dengan ingress aktual VPS staging):
+#
+#   limit_req_zone $binary_remote_addr zone=rims_auth:10m rate=30r/m;
+#
+#   server {
+#       listen 80;
+#       server_name lppm.nathara.ac.id;
+#
+#       location /auth/ {
+#           limit_req zone=rims_auth burst=10 nodelay;
+#           limit_req_status 429;
+#           proxy_pass http://rims-backend:8080;
+#           proxy_set_header Host $host;
+#           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#       }
+#   }
+#
+# Kustodi: DevOps (workdir nathara-infrastructure untuk tunnel/nginx).
+# Verifikasi: `for i in $(seq 1 40); do curl -s -o /dev/null -w "%{http_code}\n"
+# -X POST https://lppm.nathara.ac.id/auth/sso/callback
+# -H 'Content-Type: application/json' -d '{"supabase_jwt":"x"}'; done`
+# -> 40x untuk payload buruk, lalu 429 setelah melewati ambang.

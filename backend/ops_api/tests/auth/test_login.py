@@ -135,14 +135,15 @@ def test_login_with_no_active_session(client, loaded_db, mocker):
 
     m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
     m_verify.return_value = {
-        "iss": "https://api.nathara.ac.id/auth/v1",
-        "aud": "authenticated",
+        "iss": "https://sso.nathara.ac.id",
+        "aud": "lppm",
         "sub": "33333333-3333-3333-3333-333333333333",
         "email": "user.demo@email.com",
         "given_name": "User",
         "family_name": "Demo",
         "exp": 4102444800,
         "role": "admin",
+        "scopes": ["RIMS"],
         "scope": "RIMS",
     }
     res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
@@ -177,14 +178,15 @@ def test_login_with_active_session(client, db_with_active_user_session, mocker):
 
     m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
     m_verify.return_value = {
-        "iss": "https://api.nathara.ac.id/auth/v1",
-        "aud": "authenticated",
+        "iss": "https://sso.nathara.ac.id",
+        "aud": "lppm",
         "sub": "33333333-3333-3333-3333-333333333333",
         "email": "user.demo@email.com",
         "given_name": "User",
         "family_name": "Demo",
         "exp": 4102444800,
         "role": "admin",
+        "scopes": ["RIMS"],
         "scope": "RIMS",
     }
     res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
@@ -216,14 +218,15 @@ def test_login_with_inactive_session(client, db_with_inactive_user_session, mock
 
     m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
     m_verify.return_value = {
-        "iss": "https://api.nathara.ac.id/auth/v1",
-        "aud": "authenticated",
+        "iss": "https://sso.nathara.ac.id",
+        "aud": "lppm",
         "sub": "33333333-3333-3333-3333-333333333333",
         "email": "user.demo@email.com",
         "given_name": "User",
         "family_name": "Demo",
         "exp": 4102444800,
         "role": "admin",
+        "scopes": ["RIMS"],
         "scope": "RIMS",
     }
     res = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})
@@ -329,14 +332,15 @@ def test_login_raises_no_user_found_error(client, loaded_db, mocker):
 def test_login_user_response_excludes_sessions(client, loaded_db, mocker):
     m_verify = mocker.patch("ops_api.ops.auth.service.verify_supabase_jwt")
     m_verify.return_value = {
-        "iss": "https://api.nathara.ac.id/auth/v1",
-        "aud": "authenticated",
+        "iss": "https://sso.nathara.ac.id",
+        "aud": "lppm",
         "sub": "44444444-4444-4444-4444-444444444444",
         "email": "user.demo@email.com",
         "given_name": "User",
         "family_name": "Demo",
         "exp": 4102444800,
         "role": "admin",
+        "scopes": ["RIMS"],
         "scope": "RIMS",
     }
     result = client.post("/auth/sso/callback", json={"supabase_jwt": "dummy"})

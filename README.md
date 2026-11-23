@@ -18,10 +18,14 @@ If you want to do development, you will also need to install [Python](https://ww
 The backend uses RSA keys to sign and verify JWTs. You can generate these keys by running the following commands...
 
 MIGRATION (PM RIMS 0001): keypair JWT lama (openssl/RSA di atas) DIMATIKAN dan tidak lagi dipakai.
-SSO Supabase prod hanya butuh nilai publik (tanpa secret di repo/log):
+SSO Supabase prod hanya butuh nilai publik (tanpa secret di repo/log).
+SSOT Prod FINAL (PM RIMS 0002): JWKS functions/v1/sso-jwks (kid=sso-prod-2026-11),
+iss=https://sso.nathara.ac.id, aud=lppm; klaim otorisasi top-level role+scopes.
 
 ```shell
-export SUPABASE_JWKS_URL="https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
+export SUPABASE_JWKS_URL="https://api.nathara.ac.id/functions/v1/sso-jwks"
+export SUPABASE_ISS="https://sso.nathara.ac.id"
+export SUPABASE_AUD="lppm"
 export SUPABASE_ANON_KEY="<anon-key-publik-dari-VPS-file>"
 ```
 

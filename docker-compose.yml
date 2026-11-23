@@ -66,9 +66,9 @@ services:
       # SSO Supabase prod hanya butuh nilai publik di bawah (tanpa secret).
       # JWT_SECRET_KEY = secret server-side untuk sesi app internal HS256 (isi via file VPS, JANGAN log nilainya).
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-}
-      - SUPABASE_JWKS_URL=${SUPABASE_JWKS_URL:-https://api.nathara.ac.id/auth/v1/.well-known/jwks.json}
-      - SUPABASE_ISS=${SUPABASE_ISS:-https://api.nathara.ac.id/auth/v1}
-      - SUPABASE_AUD=${SUPABASE_AUD:-authenticated}
+      - SUPABASE_JWKS_URL=${SUPABASE_JWKS_URL:-https://api.nathara.ac.id/functions/v1/sso-jwks}
+      - SUPABASE_ISS=${SUPABASE_ISS:-https://sso.nathara.ac.id}
+      - SUPABASE_AUD=${SUPABASE_AUD:-lppm}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-}
       - SKIP_CR_FOR_DRAFT_PLANNED
       - ENABLE_MODIFIED_LOE_EDITS

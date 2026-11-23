@@ -24,7 +24,7 @@ from ops_api.ops.auth.utils import (
     get_request_ip_address,
     is_token_expired,
 )
-from ops_api.ops.utils.events import OpsEventHandler
+from ops_api.ops.utils.events import OpsEventHandler, token_fingerprint
 
 
 def _provision_sso_user(identity: dict, session: Session) -> User:
@@ -136,7 +136,8 @@ def login_sso(supabase_jwt: str) -> dict[str, Any]:
                     "email": user.email,
                     "full_name": user.full_name,
                 },
-                "access_token": user_session.access_token,
+                # H-03: JANGAN simpan token mentah di event/log — fingerprint saja.
+                "access_token_fp": token_fingerprint(user_session.access_token),
                 "session_id": user_session.id,
                 "result": "OK",
             }
@@ -186,7 +187,10 @@ def refresh() -> dict[str, str]:
     if not latest_user_session or not latest_user_session.is_active:
         raise InvalidUserSessionError("User session is not active.")
 
-    # Check if the current access token is valid before creating a new one
+    # Check if the current access token is valid before creating a new one.
+    # M-05: token di bawah berasal dari sesi milik server di DB + endpoint ini
+    # sudah jwt_required(refresh=True) (tanda tangan refresh diverifikasi
+    # framework) — pemakaian is_token_expired (unverified decode) aman di sini.
     if not is_token_expired(latest_user_session.access_token):
         return {"access_token": latest_user_session.access_token}
 

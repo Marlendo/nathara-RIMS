@@ -1,4 +1,3 @@
-import time
 from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
@@ -142,14 +141,17 @@ def _get_token_and_user_data_from_internal_auth(
     return access_token, refresh_token, user
 
 
-def is_token_expired(token: str, secret_key: str | None = None) -> bool:
-    """MIGRATION (PM RIMS 0001): validasi expiry TANPA secret key lama.
+def _is_token_expired_unverified(token: str) -> bool:
+    """M-05/L-03 (PM RIMS 0002): cek kedaluwarsa TANPA verifikasi tanda tangan.
 
-    Argumen secret_key lama diabaikan (keypair dimatikan). Expiry dibaca
-    dari klaim JWT tanpa verifikasi tanda tangan — pemanggil WAJIB sudah
-    memvalidasi tanda tangan via supabase_sso_provider.verify_supabase_jwt
-    sebelum memanggil ini untuk keputusan auth.
+    PRIVAT — pemanggil WAJIB sudah memvalidasi tanda tangan terlebih dulu
+    (mis. endpoint sudah ``jwt_required`` + token berasal dari sesi milik
+    server di DB). Memeriksa ``exp`` DAN ``iat`` (tolak iat jauh di masa
+    depan, skew +/-60 detik). Token tak-terparse/di luar masa berlaku
+    dianggap kedaluwarsa (fail-closed).
     """
+    import time
+
     from authlib.jose import jwt as jose_jwt_decode
 
     try:
@@ -167,9 +169,29 @@ def is_token_expired(token: str, secret_key: str | None = None) -> bool:
     exp = data.get("exp")
     if exp is None:
         return True
-    current_timestamp = time.time()
-    logger.debug(f"Token Expiration: {exp} Current Time: {current_timestamp}")
-    return exp < current_timestamp
+    now = time.time()
+    logger.debug(f"Token Expiration: {exp} Current Time: {now}")
+    if float(exp) < now:
+        return True
+    # L-03: tolak token pra-diterbitkan (iat jauh di masa depan).
+    iat = data.get("iat")
+    if iat is not None and float(iat) - 60 > now:
+        return True
+    return False
+
+
+def is_token_expired(token: str, secret_key: str | None = None) -> bool:
+    """MIGRATION (PM RIMS 0001): validasi expiry TANPA secret key lama.
+
+    Argumen secret_key lama diabaikan (keypair dimatikan). Wrapper kompatibel
+    untuk call-site lama + test; logika реального ada di
+    ``_is_token_expired_unverified``. Expiry dibaca dari klaim JWT tanpa
+    verifikasi tanda tangan — pemanggil WAJIB sudah memvalidasi tanda tangan
+    via supabase_sso_provider.verify_supabase_jwt sebelum memakai ini untuk
+    keputusan auth.
+    """
+    _ = secret_key  # diabaikan by-design (keypair lama dimatikan)
+    return _is_token_expired_unverified(token)
 
 
 def get_latest_user_session(user_id: int, session: Session) -> UserSession | None:

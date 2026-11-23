@@ -108,6 +108,23 @@ export const getRefreshToken = () => {
 };
 
 /**
+ * M-04 (PM RIMS 0002): bersihkan material SSO dari address bar segera setelah
+ * dibaca — JWT IdP TIDAK BOLEH tertinggal di history/proxy log/Referer.
+ * Menghapus query `sso_jwt` + hash (`#access_token=...`) via replaceState
+ * (tanpa reload, tanpa menambah entri history).
+ */
+export const cleanSsoFromUrl = () => {
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("sso_jwt");
+        url.hash = "";
+        window.history.replaceState(null, "", url.pathname + url.search);
+    } catch (error) {
+        console.error("Gagal membersihkan URL SSO:", error);
+    }
+};
+
+/**
  * Checks if the access token is valid by decoding the JWT and comparing the expiration time with the current time.
  * @param {string} token - The token to validate
  * @returns {TokenValidationStatus} Returns a TokenValidationStatus object with isValid and msg properties.

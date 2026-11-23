@@ -43,8 +43,8 @@ def test_sso_callback_denies_non_admin_rims(client, loaded_db, mocker):
     mocker.patch(
         "ops_api.ops.auth.service.verify_supabase_jwt",
         return_value={
-            "iss": "https://api.nathara.ac.id/auth/v1",
-            "aud": "authenticated",
+            "iss": "https://sso.nathara.ac.id",
+            "aud": "lppm",
             "sub": "11111111-1111-1111-1111-111111111111",
             "email": "user.demo@email.com",
             "exp": 4102444800,
@@ -64,14 +64,15 @@ def test_sso_callback_succeeds_creates_event(client, loaded_db, mocker, test_non
     mocker.patch(
         "ops_api.ops.auth.service.verify_supabase_jwt",
         return_value={
-            "iss": "https://api.nathara.ac.id/auth/v1",
-            "aud": "authenticated",
+            "iss": "https://sso.nathara.ac.id",
+            "aud": "lppm",
             "sub": "22222222-2222-2222-2222-222222222222",
             "email": test_non_admin_user.email,
             "given_name": "Test",
             "family_name": "User",
             "exp": 4102444800,
             "role": "admin",
+            "scopes": ["RIMS"],
             "scope": "RIMS",
         },
     )

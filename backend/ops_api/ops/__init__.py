@@ -73,6 +73,18 @@ def create_app() -> Flask:  # noqa: C901
     app.config.from_prefixed_env()  # type: ignore [attr-defined]
     validate_host_header_prefix(app.config.get("HOST_HEADER_PREFIX", "localhost"))
 
+    # L-01 (PM RIMS 0002): fail-fast bila JWT_SECRET_KEY kosong/fallback dev
+    # di environment non-lokal (staging/prod). Nilai secret TIDAK PERNAH di-log.
+    _dev_fallback_secret = "dev-only-insecure-secret-ganti-di-staging"
+    _ops_config = os.getenv("OPS_CONFIG") or ""
+    _non_local = bool(_ops_config) and not any(s in _ops_config for s in ("local", "test"))
+    _secret = app.config.get("JWT_SECRET_KEY")
+    if _non_local and (not _secret or _secret == _dev_fallback_secret):
+        raise RuntimeError(
+            "JWT_SECRET_KEY wajib diisi via env di environment non-lokal "
+            f"(OPS_CONFIG={_ops_config}); fallback dev ditolak saat boot."
+        )
+
     # fall back for pytest to use
     app.config.setdefault(
         "SQLALCHEMY_DATABASE_URI",
@@ -159,11 +171,35 @@ def create_app() -> Flask:  # noqa: C901
     @app.after_request
     def after_request(response):
         log_response(response)
+        # L-02: security headers dari origin (lapis tambahan selain Cloudflare).
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
         return response
 
     register_error_handlers(app)
 
     return app
+
+
+def _redact_for_log(value):
+    """H-03: samarkan token/kredensial dari body/header sebelum masuk log."""
+    try:
+        from ops_api.ops.utils.events import redact_event_metadata
+
+        return redact_event_metadata(value)
+    except Exception:
+        return value
+
+
+def _redact_body_str(body: str):
+    """H-03: coba parse body JSON lalu redact; bila bukan JSON, kembalikan apa adanya."""
+    import json
+
+    try:
+        return json.dumps(_redact_for_log(json.loads(body)), default=str)
+    except Exception:
+        return body
 
 
 def log_response(response):
@@ -184,17 +220,17 @@ def log_response(response):
             response_data = {
                 "method": request.method,
                 "url": request.url,
-                "request_headers": request.headers,
+                "request_headers": _redact_for_log(dict(request.headers)),
                 "status_code": response.status_code,
-                "json": _truncate_for_log(body, max_body),
-                "response_headers": response.headers,
+                "json": _truncate_for_log(_redact_body_str(body), max_body),
+                "response_headers": _redact_for_log(dict(response.headers)),
             }
             _log_safe(f"Response: {response_data}", max_field)
 
 
 def log_request():
     body = request.get_json(silent=True)
-    body_str = str(body) if body is not None else ""
+    body_str = str(_redact_for_log(body)) if body is not None else ""
     max_body = (
         current_app.config.get("AZURE_BODY_LOG_MAX_BYTES") if current_app.config.get("RUNNING_IN_AZURE") else None
     )
@@ -205,8 +241,8 @@ def log_request():
         "method": request.method,
         "url": request.url,
         "json": _truncate_for_log(body_str, max_body),
-        "args": request.args,
-        "headers": request.headers,
+        "args": _redact_for_log(dict(request.args)),
+        "headers": _redact_for_log(dict(request.headers)),
     }
     _log_safe(f"Request: {request_data}", max_field)
 

@@ -42,12 +42,13 @@ OPS_FRONTEND_URL = os.getenv("OPS_FRONTEND_URL", "http://localhost:3000")
 AUTHLIB_OAUTH_CLIENTS = {}
 
 # SSO Supabase PROD (hanya nilai publik; service_role + keypair lama HARAM).
-# TODO-SSOT: iss/aud/JWKS path BELUM final dari PM Production (placeholder SA-RIMS 0001).
+# SSOT Prod FINAL (PM RIMS 0002, 2026-11-23): JWKS functions/v1/sso-jwks
+# (kid=sso-prod-2026-11), iss=https://sso.nathara.ac.id, aud=lppm.
 SUPABASE_JWKS_URL = os.getenv(
-    "SUPABASE_JWKS_URL", "https://api.nathara.ac.id/auth/v1/.well-known/jwks.json"
+    "SUPABASE_JWKS_URL", "https://api.nathara.ac.id/functions/v1/sso-jwks"
 )
-SUPABASE_ISS = os.getenv("SUPABASE_ISS", "https://api.nathara.ac.id/auth/v1")
-SUPABASE_AUD = os.getenv("SUPABASE_AUD", "authenticated")
+SUPABASE_ISS = os.getenv("SUPABASE_ISS", "https://sso.nathara.ac.id")
+SUPABASE_AUD = os.getenv("SUPABASE_AUD", "lppm")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")  # publishable/anon key (public)
 
 STORAGE_ACCOUNT_NAME = "timstoragetesting"

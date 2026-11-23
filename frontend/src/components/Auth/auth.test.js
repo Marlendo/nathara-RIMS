@@ -1,4 +1,4 @@
-import { getAuthorizationCode, isValidToken } from "./auth";
+import { cleanSsoFromUrl, getAuthorizationCode, isValidToken } from "./auth";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 // Mock localStorage
@@ -24,6 +24,20 @@ describe("getAuthorizationCode (dimatikan)", () => {
         expect(() => getAuthorizationCode("whatever", "state")).toThrow(
             "Login lama dimatikan (PM RIMS 0001)"
         );
+    });
+});
+
+describe("cleanSsoFromUrl (M-04)", () => {
+    it("menghapus sso_jwt + hash dari address bar via replaceState", () => {
+        window.history.pushState({}, "", "/login?sso_jwt=SUPABASE_JWT_123&next=%2F#access_token=ABC");
+        const spy = vi.spyOn(window.history, "replaceState");
+        cleanSsoFromUrl();
+        expect(spy).toHaveBeenCalled();
+        const loc = window.location;
+        expect(loc.search).not.toContain("sso_jwt");
+        expect(loc.hash).toBe("");
+        spy.mockRestore();
+        window.history.pushState({}, "", "/");
     });
 });
 

@@ -55,10 +55,19 @@ def is_user_active(f):
 
 
 def require_rims_access(f):
-    """Guard kanonis SSO: role == 'admin' AND scope == 'RIMS' (exact).
+    """Guard kanonis SSO: role == 'admin' AND 'RIMS' in scopes (exact).
 
     Dibaca dari klaim JWT internal sesi app (diset saat login_sso dari
-    klaim Supabase prod terverifikasi). Default deny 403 jelas.
+    klaim Supabase SSOT prod terverifikasi). Default deny 403 jelas.
+
+    Model otorisasi resource (PM RIMS 0002, keputusan eksplisit): jalur
+    resource umum tetap memakai model role-permission lama
+    (``is_authorized`` -> ``_check_role``) agar diff kecil dan tidak mengubah
+    logika bisnis di luar kill-list. Pencabutan akses mengandalkan
+    ``UserSession.is_active=false`` (logout menonaktifkan semua sesi) +
+    expiry sesi app max 30 menit + idle-timeout 28 menit. Guard ini tersedia
+    untuk endpoint sensitif SSO-gated bila PM memutuskan pemasangan per
+    resource di rilis berikut — JANGAN pasang global tanpa APPROVE PM.
     """
 
     @wraps(f)
